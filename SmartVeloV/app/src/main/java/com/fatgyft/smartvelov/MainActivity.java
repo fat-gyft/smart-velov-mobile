@@ -1,5 +1,6 @@
 package com.fatgyft.smartvelov;
 
+import android.app.ProgressDialog;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -9,20 +10,28 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+
 import org.osmdroid.api.IMapController;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.MyLocationOverlay;
+import org.osmdroid.views.overlay.OverlayItem;
 
 
+public class MainActivity extends ActionBarActivity {
 
-public class MainActivity extends ActionBarActivity  implements LocationListener {
+
+    final static double MAP_DEFAULT_LATITUDE = 45.7527;
+    final static double MAP_DEFAULT_LONGITUDE = 4.8494;
+
+
+    private ProgressDialog pd;
 
     private MapView mapView;
     private IMapController mapController;
-
     private LocationManager locationManager;
-    private GeoPoint currentLocation;
+    private MyLocationListener locationListener;
 
 
     @Override
@@ -34,11 +43,14 @@ public class MainActivity extends ActionBarActivity  implements LocationListener
         mapView.setTileSource(TileSourceFactory.MAPQUESTOSM);
         mapView.setBuiltInZoomControls(true);
         mapView.setMultiTouchControls(true);
+        locationManager = (LocationManager) this.getApplicationContext().getSystemService(this.getApplicationContext().LOCATION_SERVICE);
+        locationListener = new MyLocationListener();
         mapController = this.mapView.getController();
-        mapController.setCenter(new GeoPoint(45.7527,4.8494));
-        mapController.setZoom(12);
+        //mapController.setCenter(new GeoPoint(45.7527,4.8494));
+        mapController.setZoom(20);
 
 
+        defineLocation();
 
     }
 
@@ -66,30 +78,56 @@ public class MainActivity extends ActionBarActivity  implements LocationListener
     }
 
     @Override
-    public void onLocationChanged(Location location)
-    {
-        Toast.makeText(this,
-                "latitude = " + location.getLatitude() * 1e6 + " longitude = " + location.getLongitude() * 1e6,
-                Toast.LENGTH_SHORT).show();
+    protected void onStop() {
+        super.onStop();
 
-        int latitude = (int) (location.getLatitude() * 1E6);
-        int longitude = (int) (location.getLongitude() * 1E6);
-        GeoPoint point = new GeoPoint(latitude, longitude);
-        mapController.setCenter(point);
+        if (pd != null)
+            pd.dismiss();
     }
 
-    @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
+    private void defineLocation() {
+        Location location = null;
+
+        for (String provider : locationManager.getProviders(true)) {
+            location = locationManager.getLastKnownLocation(provider);
+            if (location != null) {
+                //location.setLatitude(MAP_DEFAULT_LATITUDE);
+                //location.setLongitude(MAP_DEFAULT_LONGITUDE);
+                locationManager.requestLocationUpdates(provider, 0, 0, locationListener);
+                mapController.setCenter(new GeoPoint(location));
+                Toast.makeText(getApplicationContext(), "Current Location Accuracy : " + location.getAccuracy(),
+                        Toast.LENGTH_LONG).show();
+                break;
+            }
+        }
+
+
+        if (location == null) {
+            location = new Location(LocationManager.GPS_PROVIDER);
+            location.setLatitude(MAP_DEFAULT_LATITUDE);
+            location.setLongitude(MAP_DEFAULT_LONGITUDE);
+            mapController.setCenter(new GeoPoint(location));
+            Toast.makeText(getApplicationContext(), "Failed  to get current location, please turn on the GPS",
+                    Toast.LENGTH_LONG).show();
+        }
 
     }
 
-    @Override
-    public void onProviderEnabled(String s) {
 
-    }
+    public class MyLocationListener implements LocationListener {
 
-    @Override
-    public void onProviderDisabled(String s) {
 
+        public void onLocationChanged(Location location) {
+
+        }
+
+        public void onProviderDisabled(String provider) {
+        }
+
+        public void onProviderEnabled(String provider) {
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
     }
 }
