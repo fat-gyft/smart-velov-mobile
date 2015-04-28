@@ -1,6 +1,9 @@
 package com.fatgyft.smartvelov;
 
 import android.app.ProgressDialog;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -11,12 +14,18 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 
+import org.osmdroid.ResourceProxy;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.util.ResourceProxyImpl;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.MyLocationOverlay;
 import org.osmdroid.views.overlay.OverlayItem;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -32,6 +41,10 @@ public class MainActivity extends ActionBarActivity {
     private IMapController mapController;
     private LocationManager locationManager;
     private MyLocationListener locationListener;
+    private Location currentLocation;
+
+    private ItemizedIconOverlay currentLocationOverlay;
+    private ResourceProxy resourceProxy;
 
 
     @Override
@@ -43,14 +56,19 @@ public class MainActivity extends ActionBarActivity {
         mapView.setTileSource(TileSourceFactory.MAPQUESTOSM);
         mapView.setBuiltInZoomControls(true);
         mapView.setMultiTouchControls(true);
+        resourceProxy = new ResourceProxyImpl(getApplicationContext());
         locationManager = (LocationManager) this.getApplicationContext().getSystemService(this.getApplicationContext().LOCATION_SERVICE);
         locationListener = new MyLocationListener();
         mapController = this.mapView.getController();
-        //mapController.setCenter(new GeoPoint(45.7527,4.8494));
+
         mapController.setZoom(20);
 
 
-        defineLocation();
+        currentLocation = defineLocation();
+        Drawable currentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
+        ArrayList<GeoPoint> currentLocationList = new ArrayList<GeoPoint>();
+        currentLocationList.add(new GeoPoint(currentLocation));
+        display_markers(currentLocationList , currentLocationMarker, "Current Location", "This is my location");
 
     }
 
@@ -85,9 +103,9 @@ public class MainActivity extends ActionBarActivity {
             pd.dismiss();
     }
 
-    private void defineLocation() {
+    private Location defineLocation() {
         Location location = null;
-
+//Is it better to use another method to get the current location??
         for (String provider : locationManager.getProviders(true)) {
             location = locationManager.getLastKnownLocation(provider);
             if (location != null) {
@@ -109,7 +127,39 @@ public class MainActivity extends ActionBarActivity {
             mapController.setCenter(new GeoPoint(location));
             Toast.makeText(getApplicationContext(), "Failed  to get current location, please turn on the GPS",
                     Toast.LENGTH_LONG).show();
+            mapController.setZoom(12);
         }
+        return location;
+    }
+
+    public void display_markers(ArrayList<GeoPoint> geoPoints, Drawable myCurrentLocationMarker, String title, String desc){
+
+        OverlayItem myLocationOverlayItem = null;
+        for (GeoPoint g : geoPoints) {
+            myLocationOverlayItem = new OverlayItem(title, desc, g);
+        }
+
+        //myCurrentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
+
+        Bitmap bitmap = ((BitmapDrawable) myCurrentLocationMarker).getBitmap();
+        // Scale it to 50 x 50
+        myCurrentLocationMarker = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 50, 50, true));
+
+        myLocationOverlayItem.setMarker(myCurrentLocationMarker);
+
+        final ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
+        items.add(myLocationOverlayItem);
+
+        currentLocationOverlay = new ItemizedIconOverlay<OverlayItem>(items,
+                new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        return true;
+                    }
+                    public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        return true;
+                    }
+                }, resourceProxy);
+        this.mapView.getOverlays().add(this.currentLocationOverlay);
 
     }
 
