@@ -8,6 +8,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,6 +40,7 @@ public class MainActivity extends ActionBarActivity {
 
 
     private ProgressDialog pd;
+    private Vibrator vibrator;
 
     private JSONParser jsonParser;
 
@@ -60,6 +62,7 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        vibrator = (Vibrator)getSystemService(getApplicationContext().VIBRATOR_SERVICE);
 
         mapView = (MapView) this.findViewById(R.id.mapview);
         mapView.setTileSource(TileSourceFactory.MAPQUESTOSM);
@@ -124,6 +127,16 @@ public class MainActivity extends ActionBarActivity {
 
         if (pd != null)
             pd.dismiss();
+        if (locationManager != null)
+            locationManager.removeUpdates(locationListener);
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        if (locationManager != null)
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
     }
 
     private Location defineLocation() {
@@ -251,6 +264,7 @@ public class MainActivity extends ActionBarActivity {
     public void onClick(View view){
         switch(view.getId()){
             case R.id.centerOnLocation:
+                vibrator.vibrate(50);
                 mapController.setCenter(new GeoPoint(this.defineLocation()));
                 break;
 
