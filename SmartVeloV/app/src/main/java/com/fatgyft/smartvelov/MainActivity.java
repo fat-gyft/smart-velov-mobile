@@ -7,13 +7,14 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.osmdroid.ResourceProxy;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -21,10 +22,11 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.ResourceProxyImpl;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
-import org.osmdroid.views.overlay.MyLocationOverlay;
 import org.osmdroid.views.overlay.OverlayItem;
 
-import java.lang.reflect.Array;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 
@@ -37,11 +39,15 @@ public class MainActivity extends ActionBarActivity {
 
     private ProgressDialog pd;
 
+    private JSONParser jsonParser;
+
     private MapView mapView;
     private IMapController mapController;
     private LocationManager locationManager;
     private MyLocationListener locationListener;
     private Location currentLocation;
+
+    private ArrayList<VeloVStation> velovStations;
 
     private ItemizedIconOverlay currentLocationOverlay;
     private ResourceProxy resourceProxy;
@@ -60,15 +66,26 @@ public class MainActivity extends ActionBarActivity {
         locationManager = (LocationManager) this.getApplicationContext().getSystemService(this.getApplicationContext().LOCATION_SERVICE);
         locationListener = new MyLocationListener();
         mapController = this.mapView.getController();
-
         mapController.setZoom(20);
+
+        jsonParser = new JSONParser();
 
 
         currentLocation = defineLocation();
         Drawable currentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
-        ArrayList<GeoPoint> currentLocationList = new ArrayList<GeoPoint>();
-        currentLocationList.add(new GeoPoint(currentLocation));
-        display_markers(currentLocationList , currentLocationMarker, "Current Location", "This is my location");
+
+        display_markers(new GeoPoint(currentLocation) , currentLocationMarker, getResources().getString(R.string.currentLocation),
+                getResources().getString(R.string.currentLocationDesc));
+
+
+        velovStations = getVelovStations();
+
+        Drawable velovMarker = this.getResources().getDrawable(R.drawable.stationmarker);
+
+        for( VeloVStation v : velovStations){
+            display_markers(new GeoPoint(v.getLatitude(),v.getLongitude()) , velovMarker, v.getName(),
+                    v.getAddress());
+        }
 
     }
 
@@ -113,7 +130,7 @@ public class MainActivity extends ActionBarActivity {
                 //location.setLongitude(MAP_DEFAULT_LONGITUDE);
                 locationManager.requestLocationUpdates(provider, 0, 0, locationListener);
                 mapController.setCenter(new GeoPoint(location));
-                Toast.makeText(getApplicationContext(), "Current Location Accuracy : " + location.getAccuracy(),
+                Toast.makeText(getApplicationContext(), getResources().getString(R.string.currentLocationAcc) + location.getAccuracy(),
                         Toast.LENGTH_LONG).show();
                 break;
             }
@@ -125,25 +142,23 @@ public class MainActivity extends ActionBarActivity {
             location.setLatitude(MAP_DEFAULT_LATITUDE);
             location.setLongitude(MAP_DEFAULT_LONGITUDE);
             mapController.setCenter(new GeoPoint(location));
-            Toast.makeText(getApplicationContext(), "Failed  to get current location, please turn on the GPS",
+            Toast.makeText(getApplicationContext(), getResources().getString(R.string.currentLocationFailed),
                     Toast.LENGTH_LONG).show();
             mapController.setZoom(12);
         }
         return location;
     }
 
-    public void display_markers(ArrayList<GeoPoint> geoPoints, Drawable myCurrentLocationMarker, String title, String desc){
+    public void display_markers(GeoPoint geoPoint, Drawable myCurrentLocationMarker, String title, String desc){
 
         OverlayItem myLocationOverlayItem = null;
-        for (GeoPoint g : geoPoints) {
-            myLocationOverlayItem = new OverlayItem(title, desc, g);
-        }
+        myLocationOverlayItem = new OverlayItem(title, desc, geoPoint);
 
         //myCurrentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
 
         Bitmap bitmap = ((BitmapDrawable) myCurrentLocationMarker).getBitmap();
         // Scale it to 50 x 50
-        myCurrentLocationMarker = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 50, 50, true));
+        myCurrentLocationMarker = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 40, 40, true));
 
         myLocationOverlayItem.setMarker(myCurrentLocationMarker);
 
@@ -162,6 +177,44 @@ public class MainActivity extends ActionBarActivity {
         this.mapView.getOverlays().add(this.currentLocationOverlay);
 
     }
+
+    public ArrayList<VeloVStation> getVelovStations(){
+
+        ArrayList<VeloVStation> veloVStations = null;
+
+        try {
+            String jsonString = loadJSONFromAsset();
+            JSONArray jsonArray = new JSONArray(jsonString);
+            veloVStations = jsonParser.parseVELOVPostes(jsonArray);
+
+        }catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return veloVStations;
+
+    }
+
+    public String loadJSONFromAsset() {
+
+        String json = "";
+
+        try {
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("lyon.json")));
+            String line;
+            while((line = reader.readLine()) != null){
+                json += line;
+            }
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+
+        return json;
+    }
+
 
 
     public class MyLocationListener implements LocationListener {
