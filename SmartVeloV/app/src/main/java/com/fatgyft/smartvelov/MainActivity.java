@@ -52,6 +52,8 @@ public class MainActivity extends ActionBarActivity {
     private ItemizedIconOverlay currentLocationOverlay;
     private ResourceProxy resourceProxy;
 
+    private Drawable currentLocationMarker;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,13 +73,6 @@ public class MainActivity extends ActionBarActivity {
         jsonParser = new JSONParser();
 
 
-        currentLocation = defineLocation();
-        Drawable currentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
-
-        display_markers(new GeoPoint(currentLocation) , currentLocationMarker, getResources().getString(R.string.currentLocation),
-                getResources().getString(R.string.currentLocationDesc));
-
-
         velovStations = getVelovStations();
 
         Drawable velovMarker = this.getResources().getDrawable(R.drawable.stationmarker);
@@ -86,6 +81,12 @@ public class MainActivity extends ActionBarActivity {
             display_markers(new GeoPoint(v.getLatitude(),v.getLongitude()) , velovMarker, v.getName(),
                     v.getAddress());
         }
+
+
+        currentLocation = defineLocation();
+        currentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
+        display_markers(new GeoPoint(currentLocation) , currentLocationMarker, getResources().getString(R.string.currentLocation),
+                getResources().getString(R.string.currentLocationDesc));
 
     }
 
@@ -144,7 +145,7 @@ public class MainActivity extends ActionBarActivity {
             mapController.setCenter(new GeoPoint(location));
             Toast.makeText(getApplicationContext(), getResources().getString(R.string.currentLocationFailed),
                     Toast.LENGTH_LONG).show();
-            mapController.setZoom(12);
+            mapController.setZoom(13);
         }
         return location;
     }
@@ -221,6 +222,11 @@ public class MainActivity extends ActionBarActivity {
 
 
         public void onLocationChanged(Location location) {
+
+            mapView.getOverlays().remove(currentLocationOverlay);
+
+            display_markers(new GeoPoint(defineLocation()) , currentLocationMarker, getResources().getString(R.string.currentLocation),
+                    getResources().getString(R.string.currentLocationDesc));
 
         }
 
