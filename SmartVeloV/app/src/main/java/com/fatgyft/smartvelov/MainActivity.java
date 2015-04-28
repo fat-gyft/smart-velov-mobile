@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -83,10 +84,14 @@ public class MainActivity extends ActionBarActivity {
         }
 
 
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
         currentLocation = defineLocation();
         currentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
         display_markers(new GeoPoint(currentLocation) , currentLocationMarker, getResources().getString(R.string.currentLocation),
                 getResources().getString(R.string.currentLocationDesc));
+
+        mapController.setCenter(new GeoPoint(this.defineLocation()));
 
     }
 
@@ -127,10 +132,8 @@ public class MainActivity extends ActionBarActivity {
         for (String provider : locationManager.getProviders(true)) {
             location = locationManager.getLastKnownLocation(provider);
             if (location != null) {
-                //location.setLatitude(MAP_DEFAULT_LATITUDE);
-                //location.setLongitude(MAP_DEFAULT_LONGITUDE);
                 locationManager.requestLocationUpdates(provider, 0, 0, locationListener);
-                mapController.setCenter(new GeoPoint(location));
+                //mapController.setCenter(new GeoPoint(location));
                 Toast.makeText(getApplicationContext(), getResources().getString(R.string.currentLocationAcc) + location.getAccuracy(),
                         Toast.LENGTH_LONG).show();
                 break;
@@ -142,7 +145,7 @@ public class MainActivity extends ActionBarActivity {
             location = new Location(LocationManager.GPS_PROVIDER);
             location.setLatitude(MAP_DEFAULT_LATITUDE);
             location.setLongitude(MAP_DEFAULT_LONGITUDE);
-            mapController.setCenter(new GeoPoint(location));
+            //mapController.setCenter(new GeoPoint(location));
             Toast.makeText(getApplicationContext(), getResources().getString(R.string.currentLocationFailed),
                     Toast.LENGTH_LONG).show();
             mapController.setZoom(13);
@@ -225,18 +228,32 @@ public class MainActivity extends ActionBarActivity {
 
             mapView.getOverlays().remove(currentLocationOverlay);
 
-            display_markers(new GeoPoint(defineLocation()) , currentLocationMarker, getResources().getString(R.string.currentLocation),
+            display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
                     getResources().getString(R.string.currentLocationDesc));
 
         }
 
         public void onProviderDisabled(String provider) {
+
+            Toast.makeText(getApplicationContext(), "Turn on the gps",
+                    Toast.LENGTH_LONG).show();
+
         }
 
         public void onProviderEnabled(String provider) {
         }
 
         public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+    }
+
+    public void onClick(View view){
+        switch(view.getId()){
+            case R.id.centerOnLocation:
+                mapController.setCenter(new GeoPoint(this.defineLocation()));
+                break;
+
         }
     }
 }

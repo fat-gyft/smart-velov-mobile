@@ -1,4 +1,4 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
@@ -8,4 +8,19 @@
         android:layout_height="fill_parent"
         android:id="@+id/mapview">
     </org.osmdroid.views.MapView>
-</LinearLayout>
+
+    <ImageButton
+        android:layout_width="30sp"
+        android:layout_height="30sp"
+        android:id="@+id/centerOnLocation"
+        android:onClick="onClick"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20sp"
+        android:layout_marginRight="20sp"
+        android:scaleType="fitCenter"
+        android:background="@android:color/transparent"
+        android:src="@drawable/currentlocation" />
+
+
+</RelativeLayout>
