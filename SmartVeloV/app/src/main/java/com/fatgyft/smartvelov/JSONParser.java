@@ -1,5 +1,7 @@
 package com.fatgyft.smartvelov;
 
+import android.util.Pair;
+
 import com.fatgyft.smartvelov.path.Instruction;
 import com.fatgyft.smartvelov.path.Path;
 
@@ -158,9 +160,17 @@ public class JSONParser {
 
                 JSONObject n = instructions.getJSONObject(i);
                 Integer sign = n.getInt(INSTRUCTION_SIGN);
-                JSONArray interval = n.getJSONArray(INSTRUCTION_INTERVAL);
+                JSONArray JSONInterval = n.getJSONArray(INSTRUCTION_INTERVAL);
+                ArrayList<Integer> intervalPoints = parseInstructionInterval(JSONInterval);
+                if (intervalPoints.size()==2) {
 
+                    Pair<Integer, Integer> interval = new Pair<Integer, Integer>(intervalPoints.get(0),intervalPoints.get(1));
 
+                    instructionList.add(new Instruction(sign, interval));
+
+                }else{
+                    System.err.println("Wrong interval on JSON");
+                }
 
 
             }
