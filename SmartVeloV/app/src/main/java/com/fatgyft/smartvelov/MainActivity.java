@@ -10,15 +10,19 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.osmdroid.ResourceProxy;
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.overlays.Marker;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.ResourceProxyImpl;
@@ -56,6 +60,10 @@ public class MainActivity extends ActionBarActivity {
     private ResourceProxy resourceProxy;
 
     private Drawable currentLocationMarker;
+    private ImageButton showCurrentLcationBtn;
+
+    private ArrayList<Marker> markersInTheMap;
+    private  boolean followLocationIsTrue;
 
 
     @Override
@@ -65,6 +73,7 @@ public class MainActivity extends ActionBarActivity {
         vibrator = (Vibrator)getSystemService(getApplicationContext().VIBRATOR_SERVICE);
 
         mapView = (MapView) this.findViewById(R.id.mapview);
+        showCurrentLcationBtn = (ImageButton) this.findViewById(R.id.centerOnLocation);
         mapView.setTileSource(TileSourceFactory.MAPQUESTOSM);
         mapView.setBuiltInZoomControls(true);
         mapView.setMultiTouchControls(true);
@@ -75,6 +84,7 @@ public class MainActivity extends ActionBarActivity {
         mapController.setZoom(20);
 
         jsonParser = new JSONParser();
+        markersInTheMap = new ArrayList<Marker>();
 
 
         velovStations = getVelovStations();
@@ -95,6 +105,35 @@ public class MainActivity extends ActionBarActivity {
                 getResources().getString(R.string.currentLocationDesc));
 
         mapController.setCenter(new GeoPoint(this.defineLocation()));
+
+        View.OnLongClickListener listener = new View.OnLongClickListener() {
+            public boolean onLongClick(View v) {
+                if(followLocationIsTrue==false) {
+                    vibrator.vibrate(100);
+                    mapController.setCenter(new GeoPoint(defineLocation()));
+                    mapView.getOverlays().remove(currentLocationOverlay);
+                    currentLocationMarker = getResources().getDrawable(R.drawable.marker_red);
+                    display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
+                            getResources().getString(R.string.currentLocationDesc));
+                    showCurrentLcationBtn.setImageResource(R.drawable.currentlocation_red);
+                    followLocationIsTrue = true;
+                    mapView.invalidate();
+
+                }else{
+                    vibrator.vibrate(100);
+                    followLocationIsTrue = false;
+                    currentLocationMarker = getResources().getDrawable(R.drawable.marker);
+                    mapView.getOverlays().remove(currentLocationOverlay);
+                    display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
+                            getResources().getString(R.string.currentLocationDesc));
+                    showCurrentLcationBtn.setImageResource(R.drawable.currentlocation);
+                    mapView.invalidate();
+                }
+                return true;
+            }
+        };
+
+        showCurrentLcationBtn.setOnLongClickListener(listener);
 
     }
 
@@ -124,17 +163,18 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onStop() {
         super.onStop();
-
+        System.out.println("on stop");
         if (pd != null)
             pd.dismiss();
         if (locationManager != null)
+            System.out.println("desactive updates");
             locationManager.removeUpdates(locationListener);
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-
+        System.out.println("on restart");
         if (locationManager != null)
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
     }
@@ -147,8 +187,8 @@ public class MainActivity extends ActionBarActivity {
             if (location != null) {
                 locationManager.requestLocationUpdates(provider, 0, 0, locationListener);
                 //mapController.setCenter(new GeoPoint(location));
-                Toast.makeText(getApplicationContext(), getResources().getString(R.string.currentLocationAcc) + location.getAccuracy(),
-                        Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(), getResources().getString(R.string.currentLocationAcc) + location.getAccuracy(),
+                //        Toast.LENGTH_LONG).show();
                 break;
             }
         }
@@ -171,13 +211,7 @@ public class MainActivity extends ActionBarActivity {
         OverlayItem myLocationOverlayItem = null;
         myLocationOverlayItem = new OverlayItem(title, desc, geoPoint);
 
-        //myCurrentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
-
-        Bitmap bitmap = ((BitmapDrawable) myCurrentLocationMarker).getBitmap();
-        // Scale it to 50 x 50
-        myCurrentLocationMarker = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 40, 40, true));
-
-        myLocationOverlayItem.setMarker(myCurrentLocationMarker);
+        myLocationOverlayItem.setMarker(changeIconSize(myCurrentLocationMarker, 60));
 
         final ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
         items.add(myLocationOverlayItem);
@@ -185,6 +219,8 @@ public class MainActivity extends ActionBarActivity {
         currentLocationOverlay = new ItemizedIconOverlay<OverlayItem>(items,
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        clearMarkers();
+                        displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()));
                         return true;
                     }
                     public boolean onItemLongPress(final int index, final OverlayItem item) {
@@ -210,6 +246,21 @@ public class MainActivity extends ActionBarActivity {
 
         return veloVStations;
 
+    }
+
+    public void displayPopUp(GeoPoint startPoint){
+
+        Marker startMarker = new Marker(mapView);
+        startMarker.setPosition(startPoint);
+        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        mapView.getOverlays().add(startMarker);
+        markersInTheMap.add(startMarker);
+
+    }
+
+    private void clearMarkers(){
+        for(Marker m : markersInTheMap)
+            mapView.getOverlays().remove(m);
     }
 
     public String loadJSONFromAsset() {
@@ -244,6 +295,10 @@ public class MainActivity extends ActionBarActivity {
             display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
                     getResources().getString(R.string.currentLocationDesc));
 
+            if(followLocationIsTrue){
+                mapController.setCenter(new GeoPoint(location));
+            }
+
         }
 
         public void onProviderDisabled(String provider) {
@@ -269,5 +324,14 @@ public class MainActivity extends ActionBarActivity {
                 break;
 
         }
+    }
+
+    public Drawable changeIconSize(Drawable d, int size){
+
+        Bitmap bitmap = ((BitmapDrawable) d).getBitmap();
+        // Scale it to size x size
+        d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, size, size, true));
+
+        return d;
     }
 }

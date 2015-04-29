@@ -1,5 +1,8 @@
 package com.fatgyft.smartvelov;
 
+import com.fatgyft.smartvelov.path.Instruction;
+import com.fatgyft.smartvelov.path.Path;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -20,11 +23,27 @@ import java.util.ArrayList;
  */
 public class JSONParser {
 
+    //VeloV Station Constants
     private static final String VELOV_POST_NUMBER = "number";
     private static final String VELOV_POST_NAME = "name";
     private static final String VELOV_POST_ADDRESS = "address";
     private static final String VELOV_POST_LATITUDE = "latitude";
     private static final String VELOV_POST_LONGITUDE = "longitude";
+
+
+    //Path Constants
+    private static final String PATH_DISTANCE = "distance";
+    private static final String PATH_TIME = "time";
+    private static final String PATH_POINTS_ENCODED = "points-encoded";
+    private static final String PATH_WEIGHT = "weight";
+    private static final String PATH_INSTRUCTIONS = "instructions";
+    private static final String PATH_BBOX = "bbox";
+    private static final String PATH_POINTS = "points";
+
+    //Instruction Constants
+    private static final String INSTRUCTION_SIGN = "sign";
+    private static final String INSTRUCTION_TURN_ANGLE = "turn_angle";
+    private static final String INSTRUCTION_INTERVAL = "interval";
 
 
 
@@ -97,4 +116,96 @@ public class JSONParser {
 
         return veloVStationsList;
     }
+
+    public ArrayList<Path> parsePath(JSONArray paths){
+
+        ArrayList<Path> pathList = new ArrayList<Path>();
+
+        try {
+            // looping through All paths
+            for(int i = 0; i < paths.length(); i++) {
+
+                JSONObject n = paths.getJSONObject(i);
+                JSONArray instructionList = n.getJSONArray(PATH_INSTRUCTIONS);
+
+                Double distance = n.getDouble(PATH_DISTANCE);
+                Double time = n.getDouble(PATH_TIME);
+                String points_encoded = n.getString(PATH_POINTS_ENCODED);
+                Double weight = n.getDouble(PATH_WEIGHT);
+                JSONArray bbox = n.getJSONArray(PATH_BBOX);
+                String points = n.getString(PATH_POINTS);
+
+                Path path = new Path(distance,time, points_encoded,weight,parseInstruction(instructionList), parsePathBbox(bbox), points);
+
+                pathList.add(path);
+
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return pathList;
+    }
+
+    public ArrayList<Instruction> parseInstruction(JSONArray instructions){
+
+        ArrayList<Instruction> instructionList = new ArrayList<Instruction>();
+
+        try {
+            // looping through All paths
+            for(int i = 0; i < instructions.length(); i++) {
+
+                JSONObject n = instructions.getJSONObject(i);
+                Integer sign = n.getInt(INSTRUCTION_SIGN);
+                JSONArray interval = n.getJSONArray(INSTRUCTION_INTERVAL);
+
+
+
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return instructionList;
+    }
+
+    public ArrayList<Integer> parseInstructionInterval(JSONArray interval){
+
+        ArrayList<Integer> intervalList = new ArrayList<Integer>();
+
+        try {
+            // looping through All paths
+            for(int i = 0; i < interval.length(); i++) {
+
+                intervalList.add(interval.getInt(i));
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return intervalList;
+    }
+
+    public ArrayList<Double> parsePathBbox(JSONArray bbox){
+
+        ArrayList<Double> bboxList = new ArrayList<Double>();
+
+        try {
+            // looping through All paths
+            for(int i = 0; i < bbox.length(); i++) {
+
+                bboxList.add(bbox.getDouble(i));
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return bboxList;
+    }
+
 }
+
