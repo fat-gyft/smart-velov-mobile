@@ -28,4 +28,12 @@ public class Instruction {
         this.interval = interval;
         this.sign = sign;
     }
+
+    @Override
+    public String toString() {
+        return "Instruction{" +
+                "sign=" + sign +
+                ", interval=" + interval +
+                '}';
+    }
 }

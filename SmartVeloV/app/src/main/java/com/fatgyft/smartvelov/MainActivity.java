@@ -2,27 +2,36 @@ package com.fatgyft.smartvelov;
 
 import android.app.ProgressDialog;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.fatgyft.smartvelov.decoder.JSONParser;
+import com.fatgyft.smartvelov.path.Path;
+import com.fatgyft.smartvelov.request.ServiceHandler;
+
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.osmdroid.ResourceProxy;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.overlays.Marker;
+import org.osmdroid.bonuspack.overlays.Polyline;
+import org.osmdroid.bonuspack.routing.OSRMRoadManager;
+import org.osmdroid.bonuspack.routing.Road;
+import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.ResourceProxyImpl;
@@ -50,11 +59,13 @@ public class MainActivity extends ActionBarActivity {
 
     private MapView mapView;
     private IMapController mapController;
+    private RoadManager roadManager;
     private LocationManager locationManager;
     private MyLocationListener locationListener;
     private Location currentLocation;
 
     private ArrayList<VeloVStation> velovStations;
+    private ArrayList<Path> paths;
 
     private ItemizedIconOverlay currentLocationOverlay;
     private ResourceProxy resourceProxy;
@@ -71,7 +82,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         vibrator = (Vibrator)getSystemService(getApplicationContext().VIBRATOR_SERVICE);
-
+        
         mapView = (MapView) this.findViewById(R.id.mapview);
         showCurrentLcationBtn = (ImageButton) this.findViewById(R.id.centerOnLocation);
         mapView.setTileSource(TileSourceFactory.MAPQUESTOSM);
@@ -80,10 +91,12 @@ public class MainActivity extends ActionBarActivity {
         resourceProxy = new ResourceProxyImpl(getApplicationContext());
         locationManager = (LocationManager) this.getApplicationContext().getSystemService(this.getApplicationContext().LOCATION_SERVICE);
         locationListener = new MyLocationListener();
+        roadManager = new OSRMRoadManager();
         mapController = this.mapView.getController();
         mapController.setZoom(20);
 
         jsonParser = new JSONParser();
+        paths = new ArrayList<Path>();
         markersInTheMap = new ArrayList<Marker>();
 
 
@@ -105,6 +118,8 @@ public class MainActivity extends ActionBarActivity {
                 getResources().getString(R.string.currentLocationDesc));
 
         mapController.setCenter(new GeoPoint(this.defineLocation()));
+
+        new getRouteAsyncTask().execute();
 
         View.OnLongClickListener listener = new View.OnLongClickListener() {
             public boolean onLongClick(View v) {
@@ -284,6 +299,45 @@ public class MainActivity extends ActionBarActivity {
     }
 
 
+    public void onClick(View view){
+        switch(view.getId()){
+            case R.id.centerOnLocation:
+                vibrator.vibrate(50);
+                mapController.setCenter(new GeoPoint(this.defineLocation()));
+                drawPath();
+                break;
+
+        }
+    }
+
+    public Drawable changeIconSize(Drawable d, int size){
+
+        Bitmap bitmap = ((BitmapDrawable) d).getBitmap();
+        // Scale it to size x size
+        d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, size, size, true));
+
+        return d;
+    }
+
+    public void drawPath(){
+
+        Road road;
+
+        int color=Color.BLUE;
+
+        for(Path p: paths) {
+            if (p.getPoints_encoded()) {
+               road = roadManager.getRoad(p.getPoints());
+                Polyline roadOverlay = RoadManager.buildRoadOverlay(road, this);
+                roadOverlay.setColor(color++);
+                mapView.getOverlays().add(roadOverlay);
+                mapView.invalidate();
+            }
+        }
+
+    }
+
+
 
     public class MyLocationListener implements LocationListener {
 
@@ -316,22 +370,53 @@ public class MainActivity extends ActionBarActivity {
 
     }
 
-    public void onClick(View view){
-        switch(view.getId()){
-            case R.id.centerOnLocation:
-                vibrator.vibrate(50);
-                mapController.setCenter(new GeoPoint(this.defineLocation()));
-                break;
+    private class getRouteAsyncTask extends AsyncTask<Void, Void, Void> {
 
+        private ProgressDialog progress;
+        private String json;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progress = new ProgressDialog(MainActivity.this);
+                    progress.setMessage("Trying to get json");
+                    progress.show();
+                }
+            });
         }
-    }
 
-    public Drawable changeIconSize(Drawable d, int size){
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
 
-        Bitmap bitmap = ((BitmapDrawable) d).getBitmap();
-        // Scale it to size x size
-        d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, size, size, true));
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (progress.isShowing()) {
+                        progress.dismiss();
+                    }
 
-        return d;
+                }
+            });
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            ServiceHandler serviceHandler = new ServiceHandler();
+            json = serviceHandler.makeServiceCall("http://private-5543d-smartvelov.apiary-mock.com/route", ServiceHandler.GET);
+
+            try {
+                JSONObject jsonObject = new JSONObject(json);
+                paths = jsonParser.parsePath(jsonObject);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
     }
 }

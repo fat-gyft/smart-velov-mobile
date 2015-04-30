@@ -1,7 +1,8 @@
-package com.fatgyft.smartvelov;
+package com.fatgyft.smartvelov.decoder;
 
 import android.util.Pair;
 
+import com.fatgyft.smartvelov.VeloVStation;
 import com.fatgyft.smartvelov.path.Instruction;
 import com.fatgyft.smartvelov.path.Path;
 
@@ -34,9 +35,10 @@ public class JSONParser {
 
 
     //Path Constants
+    private static final String PATHS = "paths";
     private static final String PATH_DISTANCE = "distance";
     private static final String PATH_TIME = "time";
-    private static final String PATH_POINTS_ENCODED = "points-encoded";
+    private static final String PATH_POINTS_ENCODED = "points_encoded";
     private static final String PATH_WEIGHT = "weight";
     private static final String PATH_INSTRUCTIONS = "instructions";
     private static final String PATH_BBOX = "bbox";
@@ -46,47 +48,6 @@ public class JSONParser {
     private static final String INSTRUCTION_SIGN = "sign";
     private static final String INSTRUCTION_TURN_ANGLE = "turn_angle";
     private static final String INSTRUCTION_INTERVAL = "interval";
-
-
-
-    public void getJSONFromURL(String url){
-
-        DefaultHttpClient httpclient = new DefaultHttpClient(new BasicHttpParams());
-        HttpPost httppost = new HttpPost(url);
-        // Depends on your web service
-        httppost.setHeader("Content-type", "application/json");
-
-        InputStream inputStream = null;
-        String result = null;
-        try {
-            HttpResponse response = httpclient.execute(httppost);
-            HttpEntity entity = response.getEntity();
-
-            inputStream = entity.getContent();
-            // json is UTF-8 by default
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"), 8);
-            StringBuilder sb = new StringBuilder();
-
-            String line = null;
-            while ((line = reader.readLine()) != null)
-            {
-                sb.append(line + "\n");
-            }
-            result = sb.toString();
-        } catch (Exception e) {
-            // Oops
-        }
-        finally {
-            try{if(inputStream != null)inputStream.close();}catch(Exception squish){}
-        }
-
-        try {
-            JSONObject jObject = new JSONObject(result);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-    }
 
 
 
@@ -119,12 +80,15 @@ public class JSONParser {
         return veloVStationsList;
     }
 
-    public ArrayList<Path> parsePath(JSONArray paths){
+    public ArrayList<Path> parsePath(JSONObject pathsObject){
+
+
 
         ArrayList<Path> pathList = new ArrayList<Path>();
 
         try {
             // looping through All paths
+            JSONArray paths = pathsObject.getJSONArray(PATHS);
             for(int i = 0; i < paths.length(); i++) {
 
                 JSONObject n = paths.getJSONObject(i);
@@ -132,13 +96,13 @@ public class JSONParser {
 
                 Double distance = n.getDouble(PATH_DISTANCE);
                 Double time = n.getDouble(PATH_TIME);
-                String points_encoded = n.getString(PATH_POINTS_ENCODED);
+                Boolean points_encoded = n.getBoolean(PATH_POINTS_ENCODED);
                 Double weight = n.getDouble(PATH_WEIGHT);
                 JSONArray bbox = n.getJSONArray(PATH_BBOX);
                 String points = n.getString(PATH_POINTS);
 
                 Path path = new Path(distance,time, points_encoded,weight,parseInstruction(instructionList), parsePathBbox(bbox), points);
-
+                System.out.println(path);
                 pathList.add(path);
 
 
@@ -166,7 +130,11 @@ public class JSONParser {
 
                     Pair<Integer, Integer> interval = new Pair<Integer, Integer>(intervalPoints.get(0),intervalPoints.get(1));
 
-                    instructionList.add(new Instruction(sign, interval));
+                    Instruction instruction = new Instruction(sign, interval);
+
+                    instructionList.add(instruction);
+
+                    System.out.println(instruction);
 
                 }else{
                     System.err.println("Wrong interval on JSON");
