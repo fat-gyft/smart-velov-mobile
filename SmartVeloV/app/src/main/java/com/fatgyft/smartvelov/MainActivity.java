@@ -237,7 +237,7 @@ public class MainActivity extends ActionBarActivity {
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
                         clearMarkers();
-                        displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()));
+                        displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), item.getTitle());
                         return true;
                     }
                     public boolean onItemLongPress(final int index, final OverlayItem item) {
@@ -265,11 +265,12 @@ public class MainActivity extends ActionBarActivity {
 
     }
 
-    public void displayPopUp(GeoPoint startPoint){
+    public void displayPopUp(GeoPoint startPoint, String title){
 
         Marker startMarker = new Marker(mapView);
         startMarker.setPosition(startPoint);
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        startMarker.setTitle(title);
         mapView.getOverlays().add(startMarker);
         markersInTheMap.add(startMarker);
 
@@ -305,7 +306,11 @@ public class MainActivity extends ActionBarActivity {
         switch(view.getId()){
             case R.id.centerOnLocation:
                 vibrator.vibrate(50);
-                mapController.setCenter(new GeoPoint(this.defineLocation()));
+                mapController.setCenter(new GeoPoint(defineLocation()));
+                mapView.getOverlays().remove(currentLocationOverlay);
+                display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
+                        getResources().getString(R.string.currentLocationDesc));
+                mapView.invalidate();
                 drawPath();
                 break;
 

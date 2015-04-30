@@ -26,12 +26,18 @@ import java.util.ArrayList;
  */
 public class JSONParser {
 
-    //VeloV Station Constants
+    //VeloV Station Static Constants
     private static final String VELOV_POST_NUMBER = "number";
     private static final String VELOV_POST_NAME = "name";
     private static final String VELOV_POST_ADDRESS = "address";
     private static final String VELOV_POST_LATITUDE = "latitude";
     private static final String VELOV_POST_LONGITUDE = "longitude";
+
+    //VeloV Station Dynamic Constants
+    private static final String VELOV_DYNAMIC_STATUS = "status";
+    private static final String VELOV_DYNAMIC_BIKE_STANDS = "bike_stands";
+    private static final String VELOV_DYNAMIC_AVAILABLE_BIKE_STANDS = "available_bike_stands";
+    private static final String VELOV_DYNAMIC_AVAILABLE_BIKES = "available_bikes";
 
 
     //Path Constants
@@ -183,6 +189,32 @@ public class JSONParser {
         }
 
         return bboxList;
+    }
+
+    //Not tested yet
+    public VeloVStation parseVELOVDynamicInfo(JSONObject velovStationDynamicInfo, VeloVStation veloVStation){
+
+        try {
+
+            System.out.println(velovStationDynamicInfo);
+
+            Integer number = velovStationDynamicInfo.getInt(VELOV_POST_NUMBER);
+            String status = velovStationDynamicInfo.getString(VELOV_DYNAMIC_STATUS);
+            Integer bike_stands= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_BIKE_STANDS);
+            Integer available_bike_stands= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_AVAILABLE_BIKE_STANDS);
+            Integer available_bikes= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_AVAILABLE_BIKES);
+
+            if (number==veloVStation.getNumber()) {
+                veloVStation.updateDynamicInfo(status,bike_stands,available_bike_stands,available_bikes);
+            }else{
+                System.err.println("Error in dynamic info recovery");
+             }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return veloVStation;
     }
 
 }
