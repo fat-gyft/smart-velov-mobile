@@ -82,7 +82,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         vibrator = (Vibrator)getSystemService(getApplicationContext().VIBRATOR_SERVICE);
-        
+
         mapView = (MapView) this.findViewById(R.id.mapview);
         showCurrentLcationBtn = (ImageButton) this.findViewById(R.id.centerOnLocation);
         mapView.setTileSource(TileSourceFactory.MAPQUESTOSM);
@@ -170,6 +170,8 @@ public class MainActivity extends ActionBarActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        }else if (id == R.id.action_bluetooth){
+            
         }
 
         return super.onOptionsItemSelected(item);

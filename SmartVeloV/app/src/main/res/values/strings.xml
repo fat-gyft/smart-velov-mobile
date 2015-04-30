@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">SmartVeloV</string>
 
-    <string name="title_activity_request">RequestActivity</string>
+    <string name="title_activity_request">RequestActivity</string>action_bluetooth
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-
+    <string name="action_bluetooth"></string>
 
     <string name="currentLocation">Current Location</string>
     <string name="currentLocationDesc">This is your current location</string>
