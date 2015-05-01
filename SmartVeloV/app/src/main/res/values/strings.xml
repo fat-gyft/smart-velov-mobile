@@ -17,5 +17,12 @@
 
     <string name="currentLocationFailed">Failed  to get current location, please turn on the GPS</string>
 
+    <string name="backButton">Do you really want to quit?</string>
+    <string name="yes">yes</string>
+    <string name="no">no</string>
+
+    <string name="tryJSON">Trying to get json</string>
+    <string name="tryAddress">Trying to get address</string>
+    <string name="unknownAddress">Unknown Address</string>
 
 </resources>

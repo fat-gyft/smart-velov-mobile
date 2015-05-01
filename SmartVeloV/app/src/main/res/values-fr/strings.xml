@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">SmartVeloV</string>
+
+    <string name="title_activity_request">RequestActivity</string>action_bluetooth
+
+    <string name="action_settings">Paramètres</string>
+    <string name="action_bluetooth"></string>
+    <string name="action_search"></string>
+
+    <string name="currentLocation">Localisation Actuelle</string>
+    <string name="currentLocationDesc">Ceci est votre position actuelle</string>
+
+    <string name="currentLocationAcc">Précision: </string>
+
+
+
+    <string name="currentLocationFailed">Impossible d\'obtenir l\'emplacement actuel, s\'il vous plaît activer le GPS</string>
+
+    <string name="backButton">Voulez-vous vraiment quitter?</string>
+    <string name="yes">oui</string>
+    <string name="no">non</string>
+
+
+    <string name="tryJSON">Tente d\'obtenir json</string>
+    <string name="tryAddress">Tente d\'obtenir adresse</string>
+    <string name="unknownAddress">Adresse Inconnu</string>
+
+</resources>

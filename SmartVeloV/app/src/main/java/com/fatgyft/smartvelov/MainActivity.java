@@ -1,8 +1,11 @@
 package com.fatgyft.smartvelov;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -434,6 +437,26 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    public void onBackPressed() {
+        //super.onBackPressed();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage(getResources().getString(R.string.backButton))
+                .setCancelable(false)
+                .setPositiveButton(getResources().getString(R.string.yes), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        finish();
+                    }
+                })
+                .setNegativeButton(getResources().getString(R.string.no), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
 
     public class MyLocationListener implements LocationListener {
 
@@ -481,7 +504,7 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     progress = new ProgressDialog(MainActivity.this);
-                    progress.setMessage("Trying to get json");
+                    progress.setMessage(getResources().getString(R.string.tryJSON));
                     progress.show();
                 }
             });
@@ -532,7 +555,7 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     progress = new ProgressDialog(MainActivity.this);
-                    progress.setMessage("Trying to get address");
+                    progress.setMessage(getResources().getString(R.string.tryAddress));
                     progress.show();
                 }
             });
@@ -556,7 +579,7 @@ public class MainActivity extends ActionBarActivity {
                         mapView.invalidate();
                         System.out.println(query + "   " + point.getLatitude()+ " "  + point.getLongitude());
                     }else{
-                        Toast.makeText(getApplicationContext(), "Unknown Address",
+                        Toast.makeText(getApplicationContext(), getResources().getString(R.string.unknownAddress),
                                 Toast.LENGTH_LONG).show();
                     }
 
