@@ -6,6 +6,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="action_bluetooth"></string>
+    <string name="action_search"></string>
 
     <string name="currentLocation">Current Location</string>
     <string name="currentLocationDesc">This is your current location</string>

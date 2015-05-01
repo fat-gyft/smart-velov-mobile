@@ -173,6 +173,7 @@ public class JSONParser {
         return intervalList;
     }
 
+
     public ArrayList<Double> parsePathBbox(JSONArray bbox){
 
         ArrayList<Double> bboxList = new ArrayList<Double>();

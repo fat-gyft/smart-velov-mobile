@@ -5,4 +5,9 @@
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_bluetooth" android:title="@string/action_bluetooth"
         android:orderInCategory="200" app:showAsAction="always" android:icon="@drawable/ic_action_device_access_bluetooth_searching" />
+    <item android:id="@+id/action_search"
+        android:title="@string/action_search"
+        android:icon="@drawable/ic_action_search"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:actionViewClass="android.support.v7.widget.SearchView" />
 </menu>
