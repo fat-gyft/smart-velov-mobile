@@ -322,10 +322,11 @@ public class MainActivity extends ActionBarActivity {
         Marker startMarker = new Marker(mapView);
         startMarker.setPosition(startPoint);
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        startMarker.setIcon(changeIconSize(getResources().getDrawable(R.drawable.stationmarker), "big"));
         startMarker.setTitle(title);
         mapView.getOverlays().add(startMarker);
         markersInTheMap.add(startMarker);
-
+        mapView.invalidate();
     }
 
     /**
@@ -394,6 +395,8 @@ public class MainActivity extends ActionBarActivity {
             d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 50, 50, true));
         }else if("searchBoxLocationPin".equals(type)){
             d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 60, 60, true));
+        }else if("big".equals(type)){
+            d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 100, 100, true));
         }
 
         return d;
