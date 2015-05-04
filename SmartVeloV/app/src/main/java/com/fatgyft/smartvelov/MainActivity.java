@@ -3,6 +3,7 @@ package com.fatgyft.smartvelov;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -528,7 +529,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected Void doInBackground(Void... voids) {
             ServiceHandler serviceHandler = new ServiceHandler();
-            json = serviceHandler.makeServiceCall("http://private-5543d-smartvelov.apiary-mock.com/route", ServiceHandler.GET);
+            json = serviceHandler.makeServiceCall(ServiceHandler.ROUTE_URL, ServiceHandler.GET);
 
             try {
                 JSONObject jsonObject = new JSONObject(json);
