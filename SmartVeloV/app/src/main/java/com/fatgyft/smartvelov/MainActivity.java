@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -116,7 +117,6 @@ public class MainActivity extends ActionBarActivity {
 
 
         vibrator = (Vibrator)getSystemService(getApplicationContext().VIBRATOR_SERVICE);
-
         mapView = (MapView) this.findViewById(R.id.mapview);
         showCurrentLcationBtn = (ImageButton) this.findViewById(R.id.centerOnLocation);
         mapView.setTileSource(TileSourceFactory.MAPQUESTOSM);
@@ -145,7 +145,12 @@ public class MainActivity extends ActionBarActivity {
         }
 
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100, 0, locationListener);
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
+        criteria.setVerticalAccuracy(Criteria.ACCURACY_HIGH);
+        locationManager.getBestProvider(criteria, true);
 
         currentLocation = defineLocation();
         currentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
@@ -170,6 +175,7 @@ public class MainActivity extends ActionBarActivity {
                             getResources().getString(R.string.currentLocationAcc) + currentLocation.getAccuracy(), "currentLocation");
                     showCurrentLcationBtn.setImageResource(R.drawable.currentlocation_red);
                     followLocationIsTrue = true;
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
                     mapView.invalidate();
 
                 }else{
@@ -184,6 +190,7 @@ public class MainActivity extends ActionBarActivity {
 
                     showCurrentLcationBtn.setImageResource(R.drawable.currentlocation);
                     locationListener.onLocationChanged(defineLocation());
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, locationListener);
                     mapView.invalidate();
                 }
                 return true;
