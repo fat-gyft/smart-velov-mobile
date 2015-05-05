@@ -21,6 +21,10 @@ public class InstructionPoint {
         this.isOnLOcationPoint=false;
     }
 
+    public Integer getStep() {
+        return step;
+    }
+
     public GeoPoint getPoint() {
         return point;
     }

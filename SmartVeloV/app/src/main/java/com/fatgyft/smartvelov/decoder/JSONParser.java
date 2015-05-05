@@ -56,7 +56,14 @@ public class JSONParser {
     private static final String INSTRUCTION_INTERVAL = "interval";
 
 
+    //_______________________________Public Methods_______________________________
 
+    /**
+     * Method responsible to parse the JSONArray that contains all the static information from the velov stations, that is saved locally
+     *
+     * @param velovStations JSONArray with velov stations info
+     * @return ArrayList<VeloVStation> ArrayList with all the velov stations
+     */
     public ArrayList<VeloVStation> parseVELOVPostes(JSONArray velovStations){
 
         ArrayList<VeloVStation> veloVStationsList = new ArrayList<VeloVStation>();
@@ -86,6 +93,12 @@ public class JSONParser {
         return veloVStationsList;
     }
 
+    /**
+     *Method responsible to parse the JSONObject that contains all the information to go from a destination to another
+     *
+     * @param pathsObject JSONObject of the list of available paths
+     * @return ArrayList<Path> with the available paths
+     */
     public ArrayList<Path> parsePath(JSONObject pathsObject){
 
 
@@ -120,7 +133,42 @@ public class JSONParser {
         return pathList;
     }
 
-    public ArrayList<Instruction> parseInstruction(JSONArray instructions){
+    /**
+     * Method responsible to parse the JSONObject that contains all the dynamic information from one velov station, that is on JCDECAUX server
+     *
+     * @param velovStationDynamicInfo JSONArray with velov dynamic info
+     * @param veloVStation velov station that needs the information updated
+     * @return updated velov station
+     */
+    public VeloVStation parseVELOVDynamicInfo(JSONObject velovStationDynamicInfo, VeloVStation veloVStation){
+
+        try {
+
+            System.out.println(velovStationDynamicInfo);
+
+            Integer number = velovStationDynamicInfo.getInt(VELOV_POST_NUMBER);
+            String status = velovStationDynamicInfo.getString(VELOV_DYNAMIC_STATUS);
+            Integer bike_stands= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_BIKE_STANDS);
+            Integer available_bike_stands= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_AVAILABLE_BIKE_STANDS);
+            Integer available_bikes= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_AVAILABLE_BIKES);
+
+            if (number.equals(veloVStation.getNumber())) {
+                veloVStation.updateDynamicInfo(status,bike_stands,available_bike_stands,available_bikes);
+            }else{
+                System.err.println("Error in dynamic info recovery");
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return veloVStation;
+    }
+
+
+    //_______________________________Private Methods_______________________________
+
+    private ArrayList<Instruction> parseInstruction(JSONArray instructions){
 
         ArrayList<Instruction> instructionList = new ArrayList<Instruction>();
 
@@ -155,7 +203,7 @@ public class JSONParser {
         return instructionList;
     }
 
-    public ArrayList<Integer> parseInstructionInterval(JSONArray interval){
+    private ArrayList<Integer> parseInstructionInterval(JSONArray interval){
 
         ArrayList<Integer> intervalList = new ArrayList<Integer>();
 
@@ -174,7 +222,7 @@ public class JSONParser {
     }
 
 
-    public ArrayList<Double> parsePathBbox(JSONArray bbox){
+    private ArrayList<Double> parsePathBbox(JSONArray bbox){
 
         ArrayList<Double> bboxList = new ArrayList<Double>();
 
@@ -190,32 +238,6 @@ public class JSONParser {
         }
 
         return bboxList;
-    }
-
-    //Not tested yet
-    public VeloVStation parseVELOVDynamicInfo(JSONObject velovStationDynamicInfo, VeloVStation veloVStation){
-
-        try {
-
-            System.out.println(velovStationDynamicInfo);
-
-            Integer number = velovStationDynamicInfo.getInt(VELOV_POST_NUMBER);
-            String status = velovStationDynamicInfo.getString(VELOV_DYNAMIC_STATUS);
-            Integer bike_stands= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_BIKE_STANDS);
-            Integer available_bike_stands= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_AVAILABLE_BIKE_STANDS);
-            Integer available_bikes= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_AVAILABLE_BIKES);
-
-            if (number.equals(veloVStation.getNumber())) {
-                veloVStation.updateDynamicInfo(status,bike_stands,available_bike_stands,available_bikes);
-            }else{
-                System.err.println("Error in dynamic info recovery");
-             }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return veloVStation;
     }
 
 }
