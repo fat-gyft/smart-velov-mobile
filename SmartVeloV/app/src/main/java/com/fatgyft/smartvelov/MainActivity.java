@@ -6,7 +6,6 @@ import android.app.SearchManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -28,6 +27,8 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.fatgyft.smartvelov.decoder.JSONParser;
+import com.fatgyft.smartvelov.path.Instruction;
+import com.fatgyft.smartvelov.path.InstructionPoint;
 import com.fatgyft.smartvelov.path.Path;
 import com.fatgyft.smartvelov.request.ServiceHandler;
 
@@ -36,12 +37,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.osmdroid.ResourceProxy;
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.location.NominatimPOIProvider;
+import org.osmdroid.bonuspack.location.POI;
 import org.osmdroid.bonuspack.overlays.Marker;
 import org.osmdroid.bonuspack.overlays.Polyline;
 import org.osmdroid.bonuspack.routing.OSRMRoadManager;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.BoundingBoxE6;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.ResourceProxyImpl;
 import org.osmdroid.views.MapView;
@@ -89,6 +93,7 @@ public class MainActivity extends ActionBarActivity {
     private ItemizedIconOverlay searchedLocationPinOverlay;
 
     private ArrayList<Marker> markersInTheMap;
+    private ArrayList<InstructionPoint> instructionPointList;
     private  boolean followLocationIsTrue;
 
 
@@ -116,6 +121,7 @@ public class MainActivity extends ActionBarActivity {
         velovStationsOverlayList = new ArrayList<ItemizedIconOverlay>();
 
         velovStations = getVelovStations();
+        instructionPointList = new ArrayList<InstructionPoint>();
 
         Drawable velovMarker = this.getResources().getDrawable(R.drawable.stationmarker);
 
@@ -283,7 +289,7 @@ public class MainActivity extends ActionBarActivity {
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
                         clearMarkers();
-                        displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), item.getTitle());
+                        displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), item.getTitle(), item.getDrawable());
                         return true;
                     }
                     public boolean onItemLongPress(final int index, final OverlayItem item) {
@@ -292,6 +298,33 @@ public class MainActivity extends ActionBarActivity {
                 }, resourceProxy);
         this.mapView.getOverlays().add(itemizedIconOverlay);
         saveOverlayItem(type, itemizedIconOverlay);
+
+    }
+
+    public void displayInstructionMarker(GeoPoint geoPoint, Drawable myCurrentLocationMarker, InstructionPoint ip){
+
+        OverlayItem myLocationOverlayItem = null;
+        myLocationOverlayItem = new OverlayItem(""+ip.getSign(), "", geoPoint);
+
+        myLocationOverlayItem.setMarker(changeIconSize(myCurrentLocationMarker, "instruction"));
+
+        ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
+        items.add(myLocationOverlayItem);
+
+        ItemizedIconOverlay itemizedIconOverlay = new ItemizedIconOverlay<OverlayItem>(items,
+                new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        clearMarkers();
+                        displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), item.getTitle(), item.getDrawable());
+                        return true;
+                    }
+                    public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        return true;
+                    }
+                }, resourceProxy);
+        this.mapView.getOverlays().add(itemizedIconOverlay);
+
+        ip.setItem(itemizedIconOverlay);
 
     }
 
@@ -321,12 +354,12 @@ public class MainActivity extends ActionBarActivity {
      * @param startPoint
      * @param title
      */
-    public void displayPopUp(GeoPoint startPoint, String title){
+    public void displayPopUp(GeoPoint startPoint, String title, Drawable d){
 
         Marker startMarker = new Marker(mapView);
         startMarker.setPosition(startPoint);
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        startMarker.setIcon(changeIconSize(getResources().getDrawable(R.drawable.stationmarker), "big"));
+        startMarker.setIcon(biggerIcon(d));
         startMarker.setTitle(title);
         mapView.getOverlays().add(startMarker);
         markersInTheMap.add(startMarker);
@@ -337,8 +370,11 @@ public class MainActivity extends ActionBarActivity {
      *
      */
     private void clearMarkers(){
-        for(Marker m : markersInTheMap)
+        for(Marker m : markersInTheMap) {
+            m.closeInfoWindow();
             mapView.getOverlays().remove(m);
+        }
+        markersInTheMap.clear();
     }
 
     /**
@@ -378,6 +414,7 @@ public class MainActivity extends ActionBarActivity {
                         getResources().getString(R.string.currentLocationDesc), "currentLocation");
                 mapView.invalidate();
                 drawPath();
+                //showInterestPoint(new GeoPoint(defineLocation()));
                 break;
 
         }
@@ -399,10 +436,20 @@ public class MainActivity extends ActionBarActivity {
             d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 50, 50, true));
         }else if("searchBoxLocationPin".equals(type)){
             d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 60, 60, true));
-        }else if("big".equals(type)){
-            d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 100, 100, true));
+        }else if("interestPoint".equals(type)){
+            d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 50, 50, true));
+        }else if("instruction".equals(type)){
+            d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, 30, 30, true));
         }
 
+        return d;
+    }
+
+    public Drawable biggerIcon(Drawable d){
+        Bitmap bitmap = ((BitmapDrawable) d).getBitmap();
+        Integer newWidth= (int)Math.round(d.getIntrinsicWidth()*1.4);
+        Integer newHeight= (int)Math.round(d.getIntrinsicHeight() * 1.4);
+        d = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true));
         return d;
     }
 
@@ -418,10 +465,21 @@ public class MainActivity extends ActionBarActivity {
 
         for(Path p: paths) {
             if (p.getPoints_encoded()) {
-               road = roadManager.getRoad(p.getPoints());
+                road = roadManager.getRoad(p.getPoints());
                 Polyline roadOverlay = RoadManager.buildRoadOverlay(road, this);
                 roadOverlay.setColor(color++);
                 mapView.getOverlays().add(roadOverlay);
+                int i=0;
+                for(Instruction instruction : p.getInstructions()){
+                    ArrayList<GeoPoint> pointsSubList = new ArrayList<GeoPoint>(p.getPoints().subList(instruction.getInterval().first,instruction.getInterval().second));
+                    Drawable d = getResources().getDrawable(R.drawable.instruction);
+                    for(GeoPoint point: pointsSubList){
+                        InstructionPoint instructionPoint = new InstructionPoint(i,instruction.getSign(),point);
+                        instructionPointList.add(instructionPoint);
+                        displayInstructionMarker(point, d, instructionPoint);
+                    }
+                }
+                mapView.zoomToBoundingBox(new BoundingBoxE6(p.getBbox().second.getLongitudeE6(),p.getBbox().second.getLatitudeE6(), p.getBbox().first.getLongitudeE6(),p.getBbox().first.getLatitudeE6()));
                 mapView.invalidate();
             }
         }
@@ -435,6 +493,30 @@ public class MainActivity extends ActionBarActivity {
             currentLocationOverlay=o;
         }else if("searchBoxLocationPin".equals(type)){
             searchedLocationPinOverlay=o;
+        }else if("instruction".equals(type)){
+
+        }
+    }
+
+    public void showInterestPoint(GeoPoint startPoint){
+        NominatimPOIProvider poiProvider = new NominatimPOIProvider();
+        ArrayList<POI> pois = poiProvider.getPOICloseTo(startPoint, "cinema", 50, 10);
+
+        for(POI poi: pois){
+            Drawable d = getResources().getDrawable(R.drawable.interest_point);
+            display_markers(poi.mLocation,d, poi.mCategory, poi.mDescription, "interestPoint");
+        }
+    }
+
+    public void navigate(Location location){
+        for(InstructionPoint ip : instructionPointList){
+            float [] f = new float[3];
+            location.distanceBetween(ip.getPoint().getLatitude(),ip.getPoint().getLongitude(),location.getLatitude(),location.getLongitude(),f);
+            if(f[0]<20){
+                Toast.makeText(getApplicationContext(), "sign: " + ip.getSign(),
+                        Toast.LENGTH_LONG).show();
+                //ip.getItem().getItem(0);
+            }
         }
     }
 
@@ -472,7 +554,9 @@ public class MainActivity extends ActionBarActivity {
                     getResources().getString(R.string.currentLocationDesc), "currentLocation");
 
             if(followLocationIsTrue){
+                navigate(location);
                 mapController.animateTo(new GeoPoint(location));
+
             }
 
         }

@@ -64,4 +64,32 @@ public class Path {
     public ArrayList<GeoPoint> getPoints() {
         return points;
     }
+
+    public Double getDistance() {
+        return distance;
+    }
+
+    public Double getTime() {
+        return time;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public ArrayList<Instruction> getInstructions() {
+        return instructions;
+    }
+
+    public Pair<GeoPoint, GeoPoint> getBbox() {
+        return bbox;
+    }
+
+    public PolylineDecoder getPolylineDecoder() {
+        return polylineDecoder;
+    }
+
+    public Boolean isPoints_encoded() {
+        return points_encoded;
+    }
 }

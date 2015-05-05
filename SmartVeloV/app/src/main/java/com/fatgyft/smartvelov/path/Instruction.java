@@ -29,6 +29,14 @@ public class Instruction {
         this.sign = sign;
     }
 
+    public Integer getSign() {
+        return sign;
+    }
+
+    public Pair<Integer, Integer> getInterval() {
+        return interval;
+    }
+
     @Override
     public String toString() {
         return "Instruction{" +
