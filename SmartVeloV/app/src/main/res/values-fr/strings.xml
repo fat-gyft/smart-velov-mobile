@@ -25,4 +25,6 @@
     <string name="tryAddress">Tente d\'obtenir adresse</string>
     <string name="unknownAddress">Adresse Inconnu</string>
 
+    <string name="bluetoothConnexionFailed">La connexion au dispositif bluetooth a échoué.</string>
+
 </resources>

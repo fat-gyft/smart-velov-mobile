@@ -29,6 +29,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.fatgyft.smartvelov.bluetooth.BluetoothArduino;
 import com.fatgyft.smartvelov.decoder.JSONParser;
 import com.fatgyft.smartvelov.path.Instruction;
 import com.fatgyft.smartvelov.path.InstructionPoint;
@@ -110,6 +111,8 @@ public class MainActivity extends ActionBarActivity {
     private BluetoothAdapter mBluetoothAdapter = null;
 
     private boolean bluetoothActivatedByApp = false;
+
+    private BluetoothArduino bluetoothArduino;
 
 
     @Override
@@ -254,7 +257,14 @@ public class MainActivity extends ActionBarActivity {
             mBluetoothAdapter.enable();
         }
 
+        bluetoothArduino = BluetoothArduino.getInstance("HC-05");
 
+        if(bluetoothArduino.Connect()){
+            Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show();
+            bluetoothArduino.SendMessage("1");
+        }else{
+            Toast.makeText(this, getString(R.string.bluetoothConnexionFailed), Toast.LENGTH_SHORT).show();
+        }
 
         return false;
     }
@@ -735,6 +745,12 @@ public class MainActivity extends ActionBarActivity {
 
         if(bluetoothActivatedByApp){
             mBluetoothAdapter.disable();
+            try {
+                bluetoothArduino.close();
+                bluetoothArduino.interrupt();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -25,4 +25,6 @@
     <string name="tryAddress">Trying to get address</string>
     <string name="unknownAddress">Unknown Address</string>
 
+    <string name="bluetoothConnexionFailed">Could not connect to bluetooth device.</string>
+
 </resources>
