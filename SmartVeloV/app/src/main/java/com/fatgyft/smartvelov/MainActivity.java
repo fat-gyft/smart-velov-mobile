@@ -36,8 +36,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.osmdroid.ResourceProxy;
 import org.osmdroid.api.IMapController;
-import org.osmdroid.bonuspack.location.NominatimPOIProvider;
-import org.osmdroid.bonuspack.location.POI;
 import org.osmdroid.bonuspack.overlays.Marker;
 import org.osmdroid.bonuspack.overlays.Polyline;
 import org.osmdroid.bonuspack.routing.OSRMRoadManager;
@@ -125,7 +123,7 @@ public class MainActivity extends ActionBarActivity {
         Drawable velovMarker = this.getResources().getDrawable(R.drawable.stationmarker);
 
         for( VeloVStation v : velovStations){
-            display_markers(new GeoPoint(v.getLatitude(),v.getLongitude()) , velovMarker, v.getName(),
+            displayMarkers(new GeoPoint(v.getLatitude(), v.getLongitude()), velovMarker, "" + v.getNumber(),
                     v.getAddress(), "velovStation");
         }
 
@@ -134,7 +132,7 @@ public class MainActivity extends ActionBarActivity {
 
         currentLocation = defineLocation();
         currentLocationMarker = this.getResources().getDrawable(R.drawable.marker);
-        display_markers(new GeoPoint(currentLocation) , currentLocationMarker, getResources().getString(R.string.currentLocation),
+        displayMarkers(new GeoPoint(currentLocation), currentLocationMarker, getResources().getString(R.string.currentLocation),
                 getResources().getString(R.string.currentLocationDesc), "currentLocation");
 
         mapController.animateTo(new GeoPoint(this.defineLocation()));
@@ -151,7 +149,7 @@ public class MainActivity extends ActionBarActivity {
                         mapView.getOverlays().remove(currentLocationOverlay);
                     }
                     currentLocationMarker = getResources().getDrawable(R.drawable.marker_red);
-                    display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
+                    displayMarkers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
                             getResources().getString(R.string.currentLocationDesc), "currentLocation");
                     showCurrentLcationBtn.setImageResource(R.drawable.currentlocation_red);
                     followLocationIsTrue = true;
@@ -164,10 +162,11 @@ public class MainActivity extends ActionBarActivity {
                     if (currentLocationOverlay!=null) {
                         mapView.getOverlays().remove(currentLocationOverlay);
                     }
-                    display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
+                    displayMarkers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
                             getResources().getString(R.string.currentLocationDesc), "currentLocation");
 
                     showCurrentLcationBtn.setImageResource(R.drawable.currentlocation);
+                    locationListener.onLocationChanged(defineLocation());
                     mapView.invalidate();
                 }
                 return true;
@@ -274,7 +273,7 @@ public class MainActivity extends ActionBarActivity {
      * @param title
      * @param desc
      */
-    public void display_markers(GeoPoint geoPoint, Drawable myCurrentLocationMarker, String title, String desc, String type){
+    public void displayMarkers(GeoPoint geoPoint, Drawable myCurrentLocationMarker, String title, String desc, final String type){
 
         OverlayItem myLocationOverlayItem = null;
         myLocationOverlayItem = new OverlayItem(title, desc, geoPoint);
@@ -288,10 +287,23 @@ public class MainActivity extends ActionBarActivity {
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
                         clearMarkers();
-                        displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), item.getTitle(), item.getDrawable());
+                        VeloVStation v = getVelovStationFromNumber(Integer.parseInt(item.getTitle()));
+                        if (v.getAvailable_bike_stands()==null) {
+                            displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), item.getTitle(), item.getDrawable(),"" );
+                        } else {
+                            displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), v.getName(),
+                                    item.getDrawable(),"Available Bikes: "+ v.getAvailable_bikes() + System.getProperty("line.separator") + //line separator doesnt work
+                                            "Available Bike Stands: "+ v.getAvailable_bike_stands());
+                        }
                         return true;
                     }
                     public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        if(type.equals("velovStation")){
+                            String get = "https://api.jcdecaux.com/vls/v1/stations/";
+                            get+=item.getTitle();
+                            get +="?contract=Lyon&apiKey=e68ce8d7e0e4089ce1dd29e42e3fff8d285001ca";
+                            new getDynamicInfoVelovTask().execute(get, item.getTitle());
+                        }
                         return true;
                     }
                 }, resourceProxy);
@@ -313,8 +325,7 @@ public class MainActivity extends ActionBarActivity {
         ItemizedIconOverlay itemizedIconOverlay = new ItemizedIconOverlay<OverlayItem>(items,
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
-                        clearMarkers();
-                        displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), item.getTitle(), item.getDrawable());
+
                         return true;
                     }
                     public boolean onItemLongPress(final int index, final OverlayItem item) {
@@ -353,13 +364,14 @@ public class MainActivity extends ActionBarActivity {
      * @param startPoint
      * @param title
      */
-    public void displayPopUp(GeoPoint startPoint, String title, Drawable d){
+    public void displayPopUp(GeoPoint startPoint, String title, Drawable d, String bikesInfo){
 
         Marker startMarker = new Marker(mapView);
         startMarker.setPosition(startPoint);
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         startMarker.setIcon(biggerIcon(d));
         startMarker.setTitle(title);
+        startMarker.setSubDescription(bikesInfo);
         mapView.getOverlays().add(startMarker);
         markersInTheMap.add(startMarker);
         mapView.invalidate();
@@ -409,7 +421,7 @@ public class MainActivity extends ActionBarActivity {
                 if (currentLocationOverlay!=null) {
                     mapView.getOverlays().remove(currentLocationOverlay);
                 }
-                display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
+                displayMarkers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
                         getResources().getString(R.string.currentLocationDesc), "currentLocation");
                 mapView.invalidate();
                 drawPath();
@@ -497,26 +509,35 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    public void showInterestPoint(GeoPoint startPoint){
-        NominatimPOIProvider poiProvider = new NominatimPOIProvider();
-        ArrayList<POI> pois = poiProvider.getPOICloseTo(startPoint, "cinema", 50, 10);
-
-        for(POI poi: pois){
-            Drawable d = getResources().getDrawable(R.drawable.interest_point);
-            display_markers(poi.mLocation,d, poi.mCategory, poi.mDescription, "interestPoint");
-        }
-    }
 
     public void navigate(Location location){
         for(InstructionPoint ip : instructionPointList){
             float [] f = new float[3];
             location.distanceBetween(ip.getPoint().getLatitude(),ip.getPoint().getLongitude(),location.getLatitude(),location.getLongitude(),f);
             if(f[0]<20){
-                Toast.makeText(getApplicationContext(), "sign: " + ip.getSign(),
-                        Toast.LENGTH_LONG).show();
+
+                if (!ip.isOnLOcationPoint()) {
+                    Toast.makeText(getApplicationContext(), "sign: " + ip.getSign(),
+                            Toast.LENGTH_LONG).show();
+                    ip.setIsOnLOcationPoint(true);
+                    Drawable d = getResources().getDrawable(R.drawable.instruction_red);
+                    ip.getItem().getItem(0).setMarker(changeIconSize(d,"instruction"));
+                }
+                //mapView.getOverlays().remove(ip.getItem());
+                //instructionPointList.remove(ip);
                 //ip.getItem().getItem(0);
             }
         }
+    }
+
+    public VeloVStation getVelovStationFromNumber(int n){
+        VeloVStation veloVStation = null;
+        for(VeloVStation v : velovStations){
+            if(v.getNumber()==n){
+                return v;
+            }
+        }
+        return veloVStation;
     }
 
     public void onBackPressed() {
@@ -549,7 +570,7 @@ public class MainActivity extends ActionBarActivity {
                 mapView.getOverlays().remove(currentLocationOverlay);
             }
 
-            display_markers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
+            displayMarkers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
                     getResources().getString(R.string.currentLocationDesc), "currentLocation");
 
             if(followLocationIsTrue){
@@ -659,7 +680,7 @@ public class MainActivity extends ActionBarActivity {
 
                     if (point!=null) {
                         Drawable d = getResources().getDrawable(R.drawable.pin);
-                        display_markers(point,d, query, "This is my searched location" , "searchBoxLocationPin");
+                        displayMarkers(point, d, query, "This is my searched location", "searchBoxLocationPin");
                         mapView.invalidate();
                         System.out.println(query + "   " + point.getLatitude()+ " "  + point.getLongitude());
                     }else{
@@ -688,6 +709,59 @@ public class MainActivity extends ActionBarActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            return null;
+        }
+    }
+
+
+    private class getDynamicInfoVelovTask extends AsyncTask<String, Void, Void> {
+
+        private ProgressDialog progress;
+        private String json;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progress = new ProgressDialog(MainActivity.this);
+                    progress.setMessage(getResources().getString(R.string.tryJSON));
+                    progress.show();
+                }
+            });
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (progress.isShowing()) {
+                        progress.dismiss();
+                    }
+
+                }
+            });
+        }
+
+        @Override
+        protected Void doInBackground(String... infos) {
+            ServiceHandler serviceHandler = new ServiceHandler();
+            json = serviceHandler.makeServiceCall(infos[0], ServiceHandler.GET);
+
+            try {
+                JSONObject jsonObject = new JSONObject(json);
+                Integer velovNumber = Integer.parseInt(infos[1]);
+                VeloVStation v = jsonParser.parseVELOVDynamicInfo(jsonObject, getVelovStationFromNumber(velovNumber));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
             return null;
         }
     }

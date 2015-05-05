@@ -205,7 +205,7 @@ public class JSONParser {
             Integer available_bike_stands= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_AVAILABLE_BIKE_STANDS);
             Integer available_bikes= velovStationDynamicInfo.getInt(VELOV_DYNAMIC_AVAILABLE_BIKES);
 
-            if (number==veloVStation.getNumber()) {
+            if (number.equals(veloVStation.getNumber())) {
                 veloVStation.updateDynamicInfo(status,bike_stands,available_bike_stands,available_bikes);
             }else{
                 System.err.println("Error in dynamic info recovery");

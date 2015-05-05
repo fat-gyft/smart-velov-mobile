@@ -12,11 +12,13 @@ public class InstructionPoint {
     private Integer sign;
     private GeoPoint point;
     private ItemizedIconOverlay item;
+    private Boolean isOnLOcationPoint;
 
     public InstructionPoint(Integer step, Integer sign, GeoPoint point) {
         this.step=step;
         this.sign = sign;
         this.point = point;
+        this.isOnLOcationPoint=false;
     }
 
     public GeoPoint getPoint() {
@@ -33,5 +35,13 @@ public class InstructionPoint {
 
     public void setItem(ItemizedIconOverlay item) {
         this.item = item;
+    }
+
+    public Boolean isOnLOcationPoint() {
+        return isOnLOcationPoint;
+    }
+
+    public void setIsOnLOcationPoint(Boolean isOnLOcationPoint) {
+        this.isOnLOcationPoint = isOnLOcationPoint;
     }
 }

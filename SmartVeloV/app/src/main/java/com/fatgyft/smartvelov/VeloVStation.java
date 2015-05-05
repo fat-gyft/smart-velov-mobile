@@ -57,4 +57,39 @@ public class VeloVStation {
     public Double getLongitude() {
         return longitude;
     }
+
+    public Integer getBike_stands() {
+        return bike_stands;
+    }
+
+
+
+    public Integer getAvailable_bike_stands() {
+        return available_bike_stands;
+    }
+
+
+
+    public Integer getAvailable_bikes() {
+        return available_bikes;
+    }
+
+
+
+    @Override
+    public String toString() {
+        return "VeloVStation{" +
+                "number=" + number +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
+                ", banking=" + banking +
+                ", bonus=" + bonus +
+                ", status='" + status + '\'' +
+                ", bike_stands=" + bike_stands +
+                ", available_bike_stands=" + available_bike_stands +
+                ", available_bikes=" + available_bikes +
+                '}';
+    }
 }
