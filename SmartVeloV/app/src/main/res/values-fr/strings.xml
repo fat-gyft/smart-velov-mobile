@@ -4,8 +4,8 @@
     <string name="title_activity_request">RequestActivity</string>action_bluetooth
 
     <string name="action_settings">Paramètres</string>
-    <string name="action_bluetooth"></string>
-    <string name="action_search"></string>
+    <string name="action_bluetooth_connect">Connecter à la barre de guidage</string>
+    <string name="action_search">Recherche</string>
 
     <string name="currentLocation">Localisation Actuelle</string>
     <string name="currentLocationDesc">Ceci est votre position actuelle</string>
