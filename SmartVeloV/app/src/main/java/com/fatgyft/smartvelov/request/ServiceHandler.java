@@ -27,7 +27,9 @@ import java.util.List;
 
 public class ServiceHandler {
 
-    static String response = null;
+    private static String response = null;
+
+    public final static String ROUTE_URL = "http://private-5543d-smartvelov.apiary-mock.com/route";
     public final static int GET = 1;
     public final static int POST = 2;
 

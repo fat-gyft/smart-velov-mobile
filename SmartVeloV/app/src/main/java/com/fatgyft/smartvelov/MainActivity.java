@@ -3,8 +3,11 @@ package com.fatgyft.smartvelov;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -19,6 +22,7 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -62,6 +66,11 @@ public class MainActivity extends ActionBarActivity {
     final static double MAP_DEFAULT_LATITUDE = 45.7527;
     final static double MAP_DEFAULT_LONGITUDE = 4.8494;
 
+    // Intent request codes
+    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
+    private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
+    private static final int REQUEST_ENABLE_BT = 3;
+
 
     private Vibrator vibrator;
 
@@ -92,6 +101,13 @@ public class MainActivity extends ActionBarActivity {
     private ArrayList<Marker> markersInTheMap;
     private ArrayList<InstructionPoint> instructionPointList;
     private  boolean followLocationIsTrue;
+
+    /**
+     * Local Bluetooth adapter
+     */
+    private BluetoothAdapter mBluetoothAdapter = null;
+
+    private boolean bluetoothActivatedByApp = false;
 
 
     @Override
@@ -175,8 +191,18 @@ public class MainActivity extends ActionBarActivity {
 
         showCurrentLcationBtn.setOnLongClickListener(listener);
 
+        //_____________________Bluetooth______________________
+
+        //get local Bluetooth adapter
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
     }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        //menu.getItem(0).setEnabled(mBluetoothAdapter.isEnabled());
+        return true;
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -215,10 +241,21 @@ public class MainActivity extends ActionBarActivity {
         if (id == R.id.action_settings) {
             return true;
         }else if (id == R.id.action_bluetooth){
-            
+            connectBluetooth();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public boolean connectBluetooth(){
+        if(!mBluetoothAdapter.isEnabled()){
+            bluetoothActivatedByApp=true;
+            mBluetoothAdapter.enable();
+        }
+
+
+
+        return false;
     }
 
     @Override
@@ -633,7 +670,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected Void doInBackground(Void... voids) {
             ServiceHandler serviceHandler = new ServiceHandler();
-            json = serviceHandler.makeServiceCall("http://private-5543d-smartvelov.apiary-mock.com/route", ServiceHandler.GET);
+            json = serviceHandler.makeServiceCall(ServiceHandler.ROUTE_URL, ServiceHandler.GET);
 
             try {
                 JSONObject jsonObject = new JSONObject(json);
@@ -763,6 +800,13 @@ public class MainActivity extends ActionBarActivity {
             }
 
             return null;
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(bluetoothActivatedByApp){
+            mBluetoothAdapter.disable();
         }
     }
 }

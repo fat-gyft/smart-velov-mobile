@@ -1,13 +1,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
-    <item android:id="@+id/action_settings" android:title="@string/action_settings"
-        android:orderInCategory="100" app:showAsAction="never" />
-    <item android:id="@+id/action_bluetooth" android:title="@string/action_bluetooth"
-        android:orderInCategory="200" app:showAsAction="always" android:icon="@drawable/ic_action_device_access_bluetooth_searching" />
-    <item android:id="@+id/action_search"
-        android:title="@string/action_search"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_bluetooth"
+        android:icon="@drawable/ic_action_device_access_bluetooth_searching"
+        android:orderInCategory="200"
+        android:title="@string/action_bluetooth_connect"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/action_search"
         android:icon="@drawable/ic_action_search"
-        app:showAsAction="ifRoom|collapseActionView"
-        app:actionViewClass="android.support.v7.widget.SearchView" />
+        android:title="@string/action_search"
+        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:showAsAction="ifRoom|collapseActionView" />
 </menu>
