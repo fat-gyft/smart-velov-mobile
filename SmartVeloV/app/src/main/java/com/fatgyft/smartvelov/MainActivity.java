@@ -800,13 +800,14 @@ public class MainActivity extends ActionBarActivity {
             }
 
             return null;
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        if(bluetoothActivatedByApp){
-            mBluetoothAdapter.disable();
         }
     }
+            @Override
+            protected void onDestroy () {
+                super.onDestroy();
+
+                if (bluetoothActivatedByApp) {
+                    mBluetoothAdapter.disable();
+                }
+            }
 }
