@@ -3,11 +3,9 @@ package com.fatgyft.smartvelov;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
-import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -113,6 +111,10 @@ public class MainActivity extends ActionBarActivity {
     private boolean bluetoothActivatedByApp = false;
 
     private BluetoothArduino bluetoothArduino;
+
+    private MenuItem bluetoothMenuItem;
+
+    private boolean deviceConnected = false;
 
 
     @Override
@@ -231,6 +233,9 @@ public class MainActivity extends ActionBarActivity {
             }
 
         });
+
+        bluetoothMenuItem = menu.findItem(R.id.action_bluetooth);
+
         return true;
     }
 
@@ -260,8 +265,11 @@ public class MainActivity extends ActionBarActivity {
         bluetoothArduino = BluetoothArduino.getInstance("HC-05");
 
         if(bluetoothArduino.Connect()){
+            deviceConnected = true;
             Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show();
-            bluetoothArduino.SendMessage("1");
+            bluetoothMenuItem.setEnabled(false);
+            bluetoothMenuItem.setIcon(R.drawable.ic_action_bluetooth_connected);
+            bluetoothArduino.SendMessage("6");
         }else{
             Toast.makeText(this, getString(R.string.bluetoothConnexionFailed), Toast.LENGTH_SHORT).show();
         }
@@ -561,6 +569,7 @@ public class MainActivity extends ActionBarActivity {
             if(f[0]<20){
                 Toast.makeText(getApplicationContext(), "sign: " + ip.getSign(),
                         Toast.LENGTH_LONG).show();
+                sendInstruction(ip.getSign());
                 //ip.getItem().getItem(0);
             }
         }
@@ -743,6 +752,8 @@ public class MainActivity extends ActionBarActivity {
     protected void onDestroy() {
         super.onDestroy();
 
+        Log.e("DESTROY", "OK");
+
         if(bluetoothActivatedByApp){
             mBluetoothAdapter.disable();
             try {
@@ -751,6 +762,14 @@ public class MainActivity extends ActionBarActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void sendInstruction(int id){
+        int[] correspondance = {1,1,2,3,4,5,5,6,7,8};
+
+        if(deviceConnected){
+            bluetoothArduino.SendMessage(""+correspondance[id+3]);
         }
     }
 }

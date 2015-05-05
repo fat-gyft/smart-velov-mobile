@@ -203,6 +203,8 @@ public class BluetoothArduino extends Thread {
 
     public void close() throws IOException {
         mBlueSocket.close();
+        mOut.close();
+        mIn.close();
     }
 
 }
