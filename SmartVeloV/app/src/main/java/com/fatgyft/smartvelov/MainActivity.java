@@ -26,10 +26,15 @@ import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.fatgyft.smartvelov.bluetooth.BluetoothArduinoService;
@@ -61,6 +66,7 @@ import org.osmdroid.views.overlay.OverlayItem;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -100,6 +106,7 @@ public class MainActivity extends ActionBarActivity {
 
     private Drawable currentLocationMarker;
     private ImageButton showCurrentLcationBtn;
+    private TextView accuracyText;
 
     private ArrayList<ItemizedIconOverlay> velovStationsOverlayList;
     private ItemizedIconOverlay searchedLocationPinOverlay;
@@ -134,6 +141,7 @@ public class MainActivity extends ActionBarActivity {
         vibrator = (Vibrator)getSystemService(getApplicationContext().VIBRATOR_SERVICE);
         mapView = (MapView) this.findViewById(R.id.mapview);
         showCurrentLcationBtn = (ImageButton) this.findViewById(R.id.centerOnLocation);
+        accuracyText = (TextView) this.findViewById(R.id.accuracyText);
         mapView.setTileSource(TileSourceFactory.MAPQUESTOSM);
         mapView.setBuiltInZoomControls(true);
         mapView.setMultiTouchControls(true);
@@ -373,9 +381,6 @@ public class MainActivity extends ActionBarActivity {
                             get+=item.getTitle();
                             get +="?contract=Lyon&apiKey=e68ce8d7e0e4089ce1dd29e42e3fff8d285001ca";
                             new getDynamicInfoVelovTask().execute(get, item.getTitle());
-                        } else if(type.equals("currentLocation")) {
-                            displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()),
-                                    title, item.getDrawable(), desc, false );
                         }
                         return true;
                     }
@@ -553,26 +558,33 @@ public class MainActivity extends ActionBarActivity {
 
         Road road;
 
-        int color=Color.BLUE;
-
+        int j=0;
         for(Path p: paths) {
             if (p.getPoints_encoded()) {
                 road = roadManager.getRoad(p.getPoints());
                 Polyline roadOverlay = RoadManager.buildRoadOverlay(road, this);
-                roadOverlay.setColor(color++);
+                if (j==1) {
+                    roadOverlay.setColor(Color.GREEN);
+                }else{
+                    roadOverlay.setColor(Color.BLUE);
+                }
                 roadOverlays.add(roadOverlay);
+                j++;
                 mapView.getOverlays().add(roadOverlay);
                 int i=0;
                 for(Instruction instruction : p.getInstructions()){
                     ArrayList<GeoPoint> pointsSubList = new ArrayList<GeoPoint>(p.getPoints().subList(instruction.getInterval().first,instruction.getInterval().second));
                     Drawable d = getResources().getDrawable(R.drawable.instruction);
                     for(GeoPoint point: pointsSubList){
-                        InstructionPoint instructionPoint = new InstructionPoint(i,instruction.getSign(),point);
+                        InstructionPoint instructionPoint = new InstructionPoint(i++,instruction.getSign(),point);
                         instructionPointList.add(instructionPoint);
                         displayInstructionMarker(point, d, instructionPoint);
                     }
                 }
                 mapView.zoomToBoundingBox(new BoundingBoxE6(p.getBbox().second.getLongitudeE6(),p.getBbox().second.getLatitudeE6(), p.getBbox().first.getLongitudeE6(),p.getBbox().first.getLatitudeE6()));
+
+                signToInfo();
+
                 mapView.invalidate();
             }
         }
@@ -586,8 +598,6 @@ public class MainActivity extends ActionBarActivity {
             currentLocationOverlay=o;
         }else if("searchBoxLocationPin".equals(type)){
             searchedLocationPinOverlay=o;
-        }else if("instruction".equals(type)){
-
         }
     }
 
@@ -598,14 +608,14 @@ public class MainActivity extends ActionBarActivity {
 
             float [] f = new float[3];
             location.distanceBetween(ip.getPoint().getLatitude(),ip.getPoint().getLongitude(),location.getLatitude(),location.getLongitude(),f);
-            if(f[0]<20){
-                if (!ip.isOnLOcationPoint()) {
-                    Toast.makeText(getApplicationContext(), "sign: " + ip.getSign(),
-                            Toast.LENGTH_LONG).show();
-                    ip.setIsOnLOcationPoint(true);
+            if(f[0]<10){
+                if (!ip.isOnLocationPoint()) {
+                    ip.setIsOnLocationPoint(true);
                     Drawable d = getResources().getDrawable(R.drawable.instruction_red);
                     ip.getItem().getItem(0).setMarker(changeIconSize(d, "instruction"));
                     sendInstruction(ip.getSign());
+
+                    displayInstructionToast(ip.getImage(), ip.getSignText());
 
                     if(ip.equals(instructionPointList.get(instructionPointList.size()-1))){
                         finihedPath=true;
@@ -692,14 +702,17 @@ public class MainActivity extends ActionBarActivity {
             if(followLocationIsTrue){
                 navigate(location);
                 mapController.animateTo(new GeoPoint(location));
-
+                accuracyText.setText(getResources().getString(R.string.currentLocationAcc)+
+                        (double)Math.round(location.getAccuracy() * 100) / 100D);
+            }else{
+                accuracyText.setText("");
             }
 
         }
 
         public void onProviderDisabled(String provider) {
 
-            Toast.makeText(getApplicationContext(), "Turn on the gps",
+            Toast.makeText(getApplicationContext(), getResources().getString(R.string.turnOnGPS),
                     Toast.LENGTH_LONG).show();
 
         }
@@ -727,7 +740,7 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     progress = new ProgressDialog(MainActivity.this);
-                    progress.setMessage(getResources().getString(R.string.tryJSON));
+                    progress.setMessage(getResources().getString(R.string.retrieveVelovStaticInfo));
                     progress.show();
                 }
             });
@@ -799,15 +812,15 @@ public class MainActivity extends ActionBarActivity {
                     }
 
                     if (point!=null) {
+                        if (searchedLocationPinOverlay!=null) {
+                            mapView.getOverlays().remove(searchedLocationPinOverlay);
+                        }
                         Drawable d = getResources().getDrawable(R.drawable.pin);
                         displayMarkers(point, d, query, "This is my searched location", "searchBoxLocationPin");
                         String destination = ""+point.getLatitude()+","+point.getLongitude();
                         GeoPoint cLoc = new GeoPoint(defineLocation());
                         String origin = ""+cLoc.getLatitude()+","+cLoc.getLongitude();
                         new getDynamicInfoPathTask().execute(origin,destination);
-                        if (searchedLocationPinOverlay!=null) {
-                            mapView.getOverlays().remove(searchedLocationPinOverlay);
-                        }
                         mapView.invalidate();
                         System.out.println(query + "   " + point.getLatitude()+ " "  + point.getLongitude());
                     }else{
@@ -856,7 +869,7 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     progress = new ProgressDialog(MainActivity.this);
-                    progress.setMessage(getResources().getString(R.string.tryJSON));
+                    progress.setMessage(getResources().getString(R.string.retrieveVelovDynamicInfo));
                     progress.show();
                 }
             });
@@ -873,8 +886,8 @@ public class MainActivity extends ActionBarActivity {
                     Drawable d = getResources().getDrawable(R.drawable.stationmarker);
 
                     displayPopUp(new GeoPoint(v.getLatitude(), v.getLongitude()), v.getName(),
-                            changeIconSize(d,"velovStation"),"Available Bikes: "+ v.getAvailable_bikes() +
-                                    " Available Bike Stands: "+ v.getAvailable_bike_stands(), true);
+                            changeIconSize(d,"velovStation"),getResources().getString(R.string.availableBikes)+ v.getAvailable_bikes() +
+                                    getResources().getString(R.string.availableBikeStands)+ v.getAvailable_bike_stands(), true);
 
                     if (progress.isShowing()) {
                         progress.dismiss();
@@ -909,6 +922,7 @@ public class MainActivity extends ActionBarActivity {
 
         private ProgressDialog progress;
         private String json;
+        private boolean success=true;
 
         @Override
         protected void onPreExecute() {
@@ -931,7 +945,12 @@ public class MainActivity extends ActionBarActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    drawPath();
+                    if (success==true) {
+                        drawPath();
+                    }else{
+                        Toast.makeText(getApplicationContext(), getResources().getString(R.string.errorGettingPath),
+                                Toast.LENGTH_LONG).show();
+                    }
                     if (progress.isShowing()) {
                         progress.dismiss();
                     }
@@ -946,7 +965,7 @@ public class MainActivity extends ActionBarActivity {
 
             String origin = infos[0];
             String destination = infos[1];
-            String url = "http://aurelienbertron.fr/api/route/"+origin+"/"+destination+"/bike2";
+            String url = "http://aurelienbertron.fr/api/route/velov/"+origin+"/"+destination;
             System.out.println(url);
             System.out.println(json);
             json = serviceHandler.makeServiceCall(url, ServiceHandler.GET);
@@ -957,6 +976,7 @@ public class MainActivity extends ActionBarActivity {
 
             } catch (JSONException e) {
                 e.printStackTrace();
+                success=false;
             }
 
             return null;
@@ -1001,5 +1021,71 @@ public class MainActivity extends ActionBarActivity {
             }
         }
     };
+
+
+    private void signToInfo(){
+        for (InstructionPoint ip: instructionPointList) {
+            switch (ip.getSign())
+            {
+                case Instruction.CONTINUE_ON_STREET:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.FINISH:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.TURN_LEFT:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.TURN_SHARP_LEFT:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.TURN_SLIGHT_LEFT:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.TURN_RIGHT:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.TURN_SHARP_RIGHT:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.TURN_SLIGHT_RIGHT:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.USE_ROUNDABOUT:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+                case Instruction.VIA_REACHED:
+                    ip.setImage(getResources().getDrawable(R.drawable.reached_green));
+                    ip.setSignText("CONTINUE_ON_STREET");
+                    break;
+            }
+        }
+    }
+
+    public void displayInstructionToast(Drawable d, String t){
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.toast_layout,
+                (ViewGroup) findViewById(R.id.toast_layout_root));
+
+        TextView text = (TextView) layout.findViewById(R.id.toast_text);
+        text.setText(t);
+        ImageView imgView = (ImageView) layout.findViewById(R.id.toast_img);
+        imgView.setImageDrawable(d);
+
+        Toast toast = new Toast(getApplicationContext());
+        toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(layout);
+        toast.show();
+    }
 
 }

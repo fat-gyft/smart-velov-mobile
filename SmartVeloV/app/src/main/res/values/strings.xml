@@ -11,20 +11,25 @@
     <string name="currentLocation">Current Location</string>
     <string name="currentLocationDesc">This is your current location</string>
 
-    <string name="currentLocationAcc">Current Location Accuracy: </string>
+    <string name="currentLocationAcc">Current Location Accuracy:\u0020</string>
 
 
-
+    <string name="turnOnGPS">Turn on the GPS</string>
     <string name="currentLocationFailed">Failed  to get current location, please turn on the GPS</string>
 
     <string name="backButton">Do you really want to quit?</string>
     <string name="yes">yes</string>
     <string name="no">no</string>
 
-    <string name="tryJSON">Trying to get json</string>
+    <string name="retrieveVelovStaticInfo">Retrieving velov stations static information</string>
+    <string name="retrieveVelovDynamicInfo">Retrieving velov stations dynamic information</string>
+    <string name="availableBikes">Available Bikes: </string>
+    <string name="availableBikeStands">\u0020Available Bike Stands:\u0020</string>
+
     <string name="tryAddress">Trying to get address</string>
     <string name="unknownAddress">Unknown Address</string>
 
     <string name="bluetoothConnexionFailed">Could not connect to bluetooth device.</string>
+    <string name="errorGettingPath">Error getting desired path</string>
 
 </resources>

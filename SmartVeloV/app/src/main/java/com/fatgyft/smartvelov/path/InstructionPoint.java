@@ -1,5 +1,7 @@
 package com.fatgyft.smartvelov.path;
 
+import android.graphics.drawable.Drawable;
+
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 
@@ -12,13 +14,15 @@ public class InstructionPoint {
     private Integer sign;
     private GeoPoint point;
     private ItemizedIconOverlay item;
-    private Boolean isOnLOcationPoint;
+    private Boolean isOnLocationPoint;
+    private Drawable image;
+    private String signText;
 
     public InstructionPoint(Integer step, Integer sign, GeoPoint point) {
         this.step=step;
         this.sign = sign;
         this.point = point;
-        this.isOnLOcationPoint=false;
+        this.isOnLocationPoint =false;
     }
 
     public Integer getStep() {
@@ -41,11 +45,27 @@ public class InstructionPoint {
         this.item = item;
     }
 
-    public Boolean isOnLOcationPoint() {
-        return isOnLOcationPoint;
+    public Boolean isOnLocationPoint() {
+        return isOnLocationPoint;
     }
 
-    public void setIsOnLOcationPoint(Boolean isOnLOcationPoint) {
-        this.isOnLOcationPoint = isOnLOcationPoint;
+    public void setIsOnLocationPoint(Boolean isOnLocationPoint) {
+        this.isOnLocationPoint = isOnLocationPoint;
+    }
+
+    public Drawable getImage() {
+        return image;
+    }
+
+    public void setImage(Drawable image) {
+        this.image = image;
+    }
+
+    public String getSignText() {
+        return signText;
+    }
+
+    public void setSignText(String signText) {
+        this.signText = signText;
     }
 }

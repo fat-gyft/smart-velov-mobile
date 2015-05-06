@@ -10,10 +10,10 @@
     <string name="currentLocation">Localisation Actuelle</string>
     <string name="currentLocationDesc">Ceci est votre position actuelle</string>
 
-    <string name="currentLocationAcc">Précision: </string>
+    <string name="currentLocationAcc">Précision:\u0020</string>
 
 
-
+    <string name="turnOnGPS">Activer le GPS s\'il vous plaît</string>
     <string name="currentLocationFailed">Impossible d\'obtenir l\'emplacement actuel, s\'il vous plaît activer le GPS</string>
 
     <string name="backButton">Voulez-vous vraiment quitter?</string>
@@ -21,10 +21,16 @@
     <string name="no">non</string>
 
 
-    <string name="tryJSON">Tente d\'obtenir json</string>
+    <string name="retrieveVelovStaticInfo">Tente d\'obtenir les informations statiques des stations velov</string>
+    <string name="retrieveVelovDynamicInfo">Tente d\'obtenir les informations dynamiques des stations velov</string>
+    <string name="availableBikes">Velos disponibles:\u0020</string>
+    <string name="availableBikeStands">\u0020Emplacements velo libres:\u0020</string>
+
+
     <string name="tryAddress">Tente d\'obtenir adresse</string>
     <string name="unknownAddress">Adresse Inconnu</string>
 
     <string name="bluetoothConnexionFailed">La connexion au dispositif bluetooth a échoué.</string>
+    <string name="errorGettingPath">Error getting desired path</string>
 
 </resources>
