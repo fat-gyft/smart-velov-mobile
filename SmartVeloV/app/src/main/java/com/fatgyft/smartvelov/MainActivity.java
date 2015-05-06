@@ -283,20 +283,8 @@ public class MainActivity extends ActionBarActivity {
 
     public boolean connectBluetooth(){
 
-        BluetoothAdapter mBlueAdapter = BluetoothAdapter.getDefaultAdapter();;
-        BluetoothDevice mBlueRobo = null;
-
-        Set<BluetoothDevice> paired = mBlueAdapter.getBondedDevices();
-        if (paired.size() > 0) {
-            for (BluetoothDevice d : paired) {
-                if (d.getName().equals("HC-05")) {
-                    mBlueRobo = d;
-                    break;
-                }
-            }
-        }
-
-        //BluetoothDevice device = mBlueAdapter.getRemoteDevice(address);
+        BluetoothAdapter mBlueAdapter = BluetoothAdapter.getDefaultAdapter();
+        BluetoothDevice mBlueRobo = mBlueAdapter.getRemoteDevice("98:D3:31:60:2B:6A");
         // Attempt to connect to the device
         // Initialize the BluetoothChatService to perform bluetooth connections
         bluetoothService = new BluetoothArduinoService(this, mHandler);
