@@ -56,6 +56,7 @@ import org.osmdroid.views.overlay.OverlayItem;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,6 +101,7 @@ public class MainActivity extends ActionBarActivity {
 
     private ArrayList<Marker> markersInTheMap;
     private ArrayList<InstructionPoint> instructionPointList;
+    private ArrayList<Polyline> roadOverlays;
     private  boolean followLocationIsTrue;
 
     /**
@@ -144,6 +146,7 @@ public class MainActivity extends ActionBarActivity {
 
         velovStations = getVelovStations();
         instructionPointList = new ArrayList<InstructionPoint>();
+        roadOverlays = new ArrayList<Polyline>();
 
         Drawable velovMarker = this.getResources().getDrawable(R.drawable.stationmarker);
 
@@ -502,7 +505,6 @@ public class MainActivity extends ActionBarActivity {
                 displayMarkers(new GeoPoint(defineLocation()), currentLocationMarker, getResources().getString(R.string.currentLocation),
                         getResources().getString(R.string.currentLocationAcc) + currentLocation.getAccuracy(), "currentLocation");
                 mapView.invalidate();
-                drawPath();
                 break;
 
         }
@@ -547,6 +549,8 @@ public class MainActivity extends ActionBarActivity {
      */
     public void drawPath(){
 
+        clearPaths();
+
         Road road;
 
         int color=Color.BLUE;
@@ -556,6 +560,7 @@ public class MainActivity extends ActionBarActivity {
                 road = roadManager.getRoad(p.getPoints());
                 Polyline roadOverlay = RoadManager.buildRoadOverlay(road, this);
                 roadOverlay.setColor(color++);
+                roadOverlays.add(roadOverlay);
                 mapView.getOverlays().add(roadOverlay);
                 int i=0;
                 for(Instruction instruction : p.getInstructions()){
@@ -615,6 +620,17 @@ public class MainActivity extends ActionBarActivity {
             }
         }
         return veloVStation;
+    }
+
+    public void clearPaths(){
+        for(InstructionPoint ip : instructionPointList){
+            mapView.getOverlays().remove(ip.getItem());
+        }
+        instructionPointList.clear();
+        for(Polyline p : roadOverlays){
+            mapView.getOverlays().remove(p);
+        }
+        roadOverlays.clear();
     }
 
     public void onBackPressed() {
@@ -779,6 +795,13 @@ public class MainActivity extends ActionBarActivity {
                     if (point!=null) {
                         Drawable d = getResources().getDrawable(R.drawable.pin);
                         displayMarkers(point, d, query, "This is my searched location", "searchBoxLocationPin");
+                        String destination = ""+point.getLatitude()+","+point.getLongitude();
+                        GeoPoint cLoc = new GeoPoint(defineLocation());
+                        String origin = ""+cLoc.getLatitude()+","+cLoc.getLongitude();
+                        new getDynamicInfoPathTask().execute(origin,destination);
+                        if (searchedLocationPinOverlay!=null) {
+                            mapView.getOverlays().remove(searchedLocationPinOverlay);
+                        }
                         mapView.invalidate();
                         System.out.println(query + "   " + point.getLatitude()+ " "  + point.getLongitude());
                     }else{
@@ -839,6 +862,7 @@ public class MainActivity extends ActionBarActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    drawPath();
                     if (progress.isShowing()) {
                         progress.dismiss();
                     }
@@ -906,9 +930,12 @@ public class MainActivity extends ActionBarActivity {
         protected Void doInBackground(String... infos) {
             ServiceHandler serviceHandler = new ServiceHandler();
 
-            String origin = infos[1];
-            String destination = infos[2];
-            json = serviceHandler.makeServiceCall(infos[0], ServiceHandler.GET);
+            String origin = infos[0];
+            String destination = infos[1];
+            String url = "http://aurelienbertron.fr/api/route/"+origin+"/"+destination+"/bike2"; //Problem in server response
+            System.out.println(url);
+            System.out.println(json);
+            json = serviceHandler.makeServiceCall(url, ServiceHandler.GET);
 
             try {
                 JSONObject jsonObject = new JSONObject(json);
