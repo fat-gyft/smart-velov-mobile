@@ -1,9 +1,11 @@
 package com.fatgyft.smartvelov;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
@@ -18,6 +20,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
@@ -28,7 +32,8 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.fatgyft.smartvelov.bluetooth.BluetoothArduino;
+import com.fatgyft.smartvelov.bluetooth.BluetoothArduinoService;
+import com.fatgyft.smartvelov.bluetooth.Constants;
 import com.fatgyft.smartvelov.decoder.JSONParser;
 import com.fatgyft.smartvelov.path.Instruction;
 import com.fatgyft.smartvelov.path.InstructionPoint;
@@ -56,9 +61,9 @@ import org.osmdroid.views.overlay.OverlayItem;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -111,11 +116,11 @@ public class MainActivity extends ActionBarActivity {
 
     private boolean bluetoothActivatedByApp = false;
 
-    private BluetoothArduino bluetoothArduino;
-
     private MenuItem bluetoothMenuItem;
 
     private boolean deviceConnected = false;
+
+    BluetoothArduinoService bluetoothService;
 
 
     @Override
@@ -278,17 +283,24 @@ public class MainActivity extends ActionBarActivity {
 
     public boolean connectBluetooth(){
 
-        bluetoothArduino = BluetoothArduino.getInstance("HC-05");
+        BluetoothAdapter mBlueAdapter = BluetoothAdapter.getDefaultAdapter();;
+        BluetoothDevice mBlueRobo = null;
 
-        if(bluetoothArduino.Connect()){
-            deviceConnected = true;
-            Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show();
-            bluetoothMenuItem.setEnabled(false);
-            bluetoothMenuItem.setIcon(R.drawable.ic_action_bluetooth_connected);
-            bluetoothArduino.SendMessage("6");
-        }else{
-            Toast.makeText(this, getString(R.string.bluetoothConnexionFailed), Toast.LENGTH_SHORT).show();
+        Set<BluetoothDevice> paired = mBlueAdapter.getBondedDevices();
+        if (paired.size() > 0) {
+            for (BluetoothDevice d : paired) {
+                if (d.getName().equals("HC-05")) {
+                    mBlueRobo = d;
+                    break;
+                }
+            }
         }
+
+        //BluetoothDevice device = mBlueAdapter.getRemoteDevice(address);
+        // Attempt to connect to the device
+        // Initialize the BluetoothChatService to perform bluetooth connections
+        bluetoothService = new BluetoothArduinoService(this, mHandler);
+        bluetoothService.connect(mBlueRobo);
 
         return false;
     }
@@ -660,12 +672,9 @@ public class MainActivity extends ActionBarActivity {
 
         if(bluetoothActivatedByApp){
             mBluetoothAdapter.disable();
-            try {
-                bluetoothArduino.close();
-                bluetoothArduino.interrupt();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        }
+        if(bluetoothService != null){
+            bluetoothService.stop();
         }
     }
 
@@ -955,8 +964,39 @@ public class MainActivity extends ActionBarActivity {
         int[] correspondance = {1,1,2,3,4,5,5,6,7,8};
 
         if(deviceConnected){
-            bluetoothArduino.SendMessage(""+correspondance[id+3]);
+            bluetoothService.write(("" + correspondance[id + 3]).getBytes());
         }
     }
+
+    /**
+     * The Handler that gets information back from the BluetoothChatService
+     */
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Activity activity = MainActivity.this;
+            switch (msg.what) {
+                case Constants.MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case BluetoothArduinoService.STATE_CONNECTED:
+                            deviceConnected = true;
+                            Toast.makeText(MainActivity.this, "Connexion réussie", Toast.LENGTH_SHORT).show();
+                            bluetoothMenuItem.setEnabled(false);
+                            bluetoothMenuItem.setIcon(R.drawable.ic_action_bluetooth_connected);
+                            sendInstruction(4);
+                            //tv.setText("\nConnected");
+                            break;
+                        case BluetoothArduinoService.STATE_CONNECTING:
+                            //tv.setText("\nConnecting");
+                            break;
+                        case BluetoothArduinoService.STATE_LISTEN:
+                        case BluetoothArduinoService.STATE_NONE:
+                            //tv.setText("\nNot connected");
+                            break;
+                    }
+                    break;
+            }
+        }
+    };
 
 }
