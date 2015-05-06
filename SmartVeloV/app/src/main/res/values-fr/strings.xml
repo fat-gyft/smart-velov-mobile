@@ -7,14 +7,19 @@
     <string name="action_bluetooth_connect">Connecter à la barre de guidage</string>
     <string name="action_search">Recherche</string>
 
-    <string name="currentLocation">Localisation Actuelle</string>
+    <string name="currentLocation">Position actuelle</string>
     <string name="currentLocationDesc">Ceci est votre position actuelle</string>
 
-    <string name="currentLocationAcc">Précision:\u0020</string>
+
+    <string name="currentLocationAcc">Précision :</string>
 
 
     <string name="turnOnGPS">Activer le GPS s\'il vous plaît</string>
-    <string name="currentLocationFailed">Impossible d\'obtenir l\'emplacement actuel, s\'il vous plaît activer le GPS</string>
+
+
+
+
+    <string name="currentLocationFailed">Impossible d\'obtenir l\'emplacement actuel, merci d'activer le GPS</string>
 
     <string name="backButton">Voulez-vous vraiment quitter?</string>
     <string name="yes">oui</string>
@@ -27,8 +32,11 @@
     <string name="availableBikeStands">\u0020Emplacements velo libres:\u0020</string>
 
 
-    <string name="tryAddress">Tente d\'obtenir adresse</string>
-    <string name="unknownAddress">Adresse Inconnu</string>
+
+
+    <string name="tryJSON">Chargement des informations</string>
+    <string name="tryAddress">Recherche de l'adresse</string>
+    <string name="unknownAddress">Adresse Inconnue</string>
 
     <string name="bluetoothConnexionFailed">La connexion au dispositif bluetooth a échoué.</string>
     <string name="errorGettingPath">Error getting desired path</string>
