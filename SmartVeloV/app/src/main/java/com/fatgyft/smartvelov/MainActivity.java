@@ -606,7 +606,9 @@ public class MainActivity extends ActionBarActivity {
 
 
     public void navigate(Location location){
+        boolean finihedPath=false;
         for(InstructionPoint ip : instructionPointList){
+
             float [] f = new float[3];
             location.distanceBetween(ip.getPoint().getLatitude(),ip.getPoint().getLongitude(),location.getLatitude(),location.getLongitude(),f);
             if(f[0]<20){
@@ -615,13 +617,20 @@ public class MainActivity extends ActionBarActivity {
                             Toast.LENGTH_LONG).show();
                     ip.setIsOnLOcationPoint(true);
                     Drawable d = getResources().getDrawable(R.drawable.instruction_red);
-                    ip.getItem().getItem(0).setMarker(changeIconSize(d,"instruction"));
+                    ip.getItem().getItem(0).setMarker(changeIconSize(d, "instruction"));
                     sendInstruction(ip.getSign());
+
+                    if(ip.equals(instructionPointList.get(instructionPointList.size()-1))){
+                        finihedPath=true;
+                    }
                 }
-                //mapView.getOverlays().remove(ip.getItem());
-                //instructionPointList.remove(ip);
-                //ip.getItem().getItem(0);
             }
+        }
+
+        if(finihedPath==true){
+            Toast.makeText(getApplicationContext(), "You reached your destination",
+                    Toast.LENGTH_LONG).show();
+            clearPaths();
         }
     }
 
