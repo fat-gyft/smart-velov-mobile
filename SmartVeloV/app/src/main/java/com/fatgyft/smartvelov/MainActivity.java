@@ -357,7 +357,10 @@ public class MainActivity extends ActionBarActivity {
                     public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
                         clearMarkers();
                         if (type.equals("velovStation")){
-                            displayPopUpVelovStation(item);
+                            String get = "https://api.jcdecaux.com/vls/v1/stations/";
+                            get+=item.getTitle();
+                            get +="?contract=Lyon&apiKey=e68ce8d7e0e4089ce1dd29e42e3fff8d285001ca";
+                            new getDynamicInfoVelovTask().execute(get, item.getTitle());
                         } else if(type.equals("currentLocation")) {
                             displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()),
                                     title, item.getDrawable(), desc, false );
@@ -365,12 +368,6 @@ public class MainActivity extends ActionBarActivity {
                         return true;
                     }
                     public boolean onItemLongPress(final int index, final OverlayItem item) {
-                        if(type.equals("velovStation")){
-                            String get = "https://api.jcdecaux.com/vls/v1/stations/";
-                            get+=item.getTitle();
-                            get +="?contract=Lyon&apiKey=e68ce8d7e0e4089ce1dd29e42e3fff8d285001ca";
-                            new getDynamicInfoVelovTask().execute(get, item.getTitle());
-                        }
                         return true;
                     }
                 }, resourceProxy);
@@ -379,16 +376,6 @@ public class MainActivity extends ActionBarActivity {
 
     }
 
-    private void displayPopUpVelovStation(OverlayItem item) {
-        VeloVStation v = getVelovStationFromNumber(Integer.parseInt(item.getTitle()));
-        if (v.getAvailable_bike_stands()==null) {
-            displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), item.getTitle(), item.getDrawable(),"" ,true);
-        } else {
-            displayPopUp(new GeoPoint(item.getPoint().getLatitude(), item.getPoint().getLongitude()), v.getName(),
-                    item.getDrawable(),"Available Bikes: "+ v.getAvailable_bikes() + System.getProperty("line.separator") + //line separator doesnt work
-                            "Available Bike Stands: "+ v.getAvailable_bike_stands(), true);
-        }
-    }
 
     public void displayInstructionMarker(GeoPoint geoPoint, Drawable myCurrentLocationMarker, InstructionPoint ip){
 
@@ -594,7 +581,9 @@ public class MainActivity extends ActionBarActivity {
 
 
     public void navigate(Location location){
+        boolean finihedPath=false;
         for(InstructionPoint ip : instructionPointList){
+
             float [] f = new float[3];
             location.distanceBetween(ip.getPoint().getLatitude(),ip.getPoint().getLongitude(),location.getLatitude(),location.getLongitude(),f);
             if(f[0]<20){
@@ -603,13 +592,20 @@ public class MainActivity extends ActionBarActivity {
                             Toast.LENGTH_LONG).show();
                     ip.setIsOnLOcationPoint(true);
                     Drawable d = getResources().getDrawable(R.drawable.instruction_red);
-                    ip.getItem().getItem(0).setMarker(changeIconSize(d,"instruction"));
+                    ip.getItem().getItem(0).setMarker(changeIconSize(d, "instruction"));
                     sendInstruction(ip.getSign());
+
+                    if(ip.equals(instructionPointList.get(instructionPointList.size()-1))){
+                        finihedPath=true;
+                    }
                 }
-                //mapView.getOverlays().remove(ip.getItem());
-                //instructionPointList.remove(ip);
-                //ip.getItem().getItem(0);
             }
+        }
+
+        if(finihedPath==true){
+            Toast.makeText(getApplicationContext(), "You reached your destination",
+                    Toast.LENGTH_LONG).show();
+            clearPaths();
         }
     }
 
@@ -838,6 +834,7 @@ public class MainActivity extends ActionBarActivity {
 
         private ProgressDialog progress;
         private String json;
+        private VeloVStation v;
 
         @Override
         protected void onPreExecute() {
@@ -860,7 +857,13 @@ public class MainActivity extends ActionBarActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    drawPath();
+
+                    Drawable d = getResources().getDrawable(R.drawable.stationmarker);
+
+                    displayPopUp(new GeoPoint(v.getLatitude(), v.getLongitude()), v.getName(),
+                            changeIconSize(d,"velovStation"),"Available Bikes: "+ v.getAvailable_bikes() +
+                                    " Available Bike Stands: "+ v.getAvailable_bike_stands(), true);
+
                     if (progress.isShowing()) {
                         progress.dismiss();
                     }
@@ -877,7 +880,7 @@ public class MainActivity extends ActionBarActivity {
             try {
                 JSONObject jsonObject = new JSONObject(json);
                 Integer velovNumber = Integer.parseInt(infos[1]);
-                VeloVStation v = jsonParser.parseVELOVDynamicInfo(jsonObject, getVelovStationFromNumber(velovNumber));
+                v = jsonParser.parseVELOVDynamicInfo(jsonObject, getVelovStationFromNumber(velovNumber));
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -931,7 +934,7 @@ public class MainActivity extends ActionBarActivity {
 
             String origin = infos[0];
             String destination = infos[1];
-            String url = "http://aurelienbertron.fr/api/route/"+origin+"/"+destination+"/bike2"; //Problem in server response
+            String url = "http://aurelienbertron.fr/api/route/"+origin+"/"+destination+"/bike2";
             System.out.println(url);
             System.out.println(json);
             json = serviceHandler.makeServiceCall(url, ServiceHandler.GET);
