@@ -239,6 +239,7 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 new searchLocationAsyncTask().execute(query);
+
                 return true;
             }
 
@@ -918,6 +919,7 @@ public class MainActivity extends ActionBarActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    drawPath();
                     if (progress.isShowing()) {
                         progress.dismiss();
                     }
